@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BakkieGo</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #0D1117;
+      color: #F0F4F8;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .logo h1 {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .bakkie { color: #00C853; }
+    .go     { color: #FF6D00; }
+
+    .subtitle {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #8B95A1;
+    }
+
+    /* Role cards */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .role-card {
+      background: #161B22;
+      border: 2px solid #2A3340;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .role-card:active {
+      transform: scale(0.97);
+    }
+
+    .role-card.selected {
+      border-color: #00C853;
+    }
+
+    .role-card.dimmed {
+      opacity: 0.45;
+    }
+
+    .card-emoji {
+      font-size: 34px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .card-label {
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .card-hint {
+      font-size: 13px;
+      color: #8B95A1;
+      margin-top: 3px;
+    }
+
+    .card-arrow {
+      color: #8B95A1;
+      font-size: 20px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    /* Phone + Continue — slides in */
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+    }
+
+    .bottom.visible {
+      max-height: 280px;
+      opacity: 1;
+    }
+
+    .phone-input {
+      width: 100%;
+      background: #161B22;
+      border: 2px solid #2A3340;
+      border-radius: 16px;
+      padding: 16px 18px;
+      color: #F0F4F8;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .phone-input::placeholder {
+      color: #8B95A1;
+    }
+
+    .phone-input:focus {
+      border-color: #00C853;
+    }
+
+    .phone-input.error {
+      border-color: #FF6D00;
+    }
+
+    .continue-btn {
+      width: 100%;
+      background: #00C853;
+      color: #0D1117;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .continue-btn:active {
+      opacity: 0.82;
+      transform: scale(0.97);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="logo">
+      <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
+      <p class="subtitle">Who are you today?</p>
+    </div>
+
+    <div class="cards">
+      <div class="role-card" id="card-trader" onclick="selectRole('trader')">
+        <span class="card-emoji">🛒</span>
+        <div class="card-label">
+          <div class="card-title">I need a bakkie</div>
+          <div class="card-hint">Move goods, find a driver fast</div>
+        </div>
+        <span class="card-arrow">›</span>
+      </div>
+
+      <div class="role-card" id="card-driver" onclick="selectRole('driver')">
+        <span class="card-emoji">🚛</span>
+        <div class="card-label">
+          <div class="card-title">I am a driver</div>
+          <div class="card-hint">Earn money with your bakkie</div>
+        </div>
+        <span class="card-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="bottom" id="bottom">
+      <input
+        type="tel"
+        id="phone"
+        class="phone-input"
+        placeholder="Phone number"
+        inputmode="tel"
+        autocomplete="tel"
+      >
+      <input
+        type="text"
+        id="name"
+        class="phone-input"
+        placeholder="Your name"
+        autocomplete="name"
+        autocorrect="off"
+      >
+      <button class="continue-btn" onclick="handleContinue()">Continue</button>
+    </div>
+
+  </div>
+
+  <script>
+    let role = null;
+
+    function selectRole(chosen) {
+      role = chosen;
+      const trader = document.getElementById('card-trader');
+      const driver = document.getElementById('card-driver');
+      const bottom = document.getElementById('bottom');
+      trader.classList.remove('selected', 'dimmed');
+      driver.classList.remove('selected', 'dimmed');
+      if (chosen === 'trader') {
+        trader.classList.add('selected');
+        driver.classList.add('dimmed');
+      } else {
+        driver.classList.add('selected');
+        trader.classList.add('dimmed');
+      }
+      bottom.classList.add('visible');
+      setTimeout(() => document.getElementById('phone').focus(), 200);
+    }
+
+    async function handleContinue() {
+      const phoneEl = document.getElementById('phone');
+      const nameEl  = document.getElementById('name');
+      const phone   = phoneEl.value.trim();
+      const name    = nameEl.value.trim();
+
+      if (!phone) {
+        phoneEl.classList.add('error'); phoneEl.focus();
+        setTimeout(() => phoneEl.classList.remove('error'), 1200); return;
+      }
+      if (!name) {
+        nameEl.classList.add('error'); nameEl.focus();
+        setTimeout(() => nameEl.classList.remove('error'), 1200); return;
+      }
+
+      const btn = document.querySelector('.continue-btn');
+      btn.disabled = true; btn.textContent = 'Loading…';
+
+      try {
+        // Look up existing user
+        let { data: user } = await supabase
+          .from('users').select('*').eq('phone', phone).maybeSingle();
+
+        if (!user) {
+          const { data: created, error } = await supabase
+            .from('users').insert({ phone, name, role }).select().single();
+          if (error) throw error;
+          user = created;
+        } else {
+          const { data: updated } = await supabase
+            .from('users').update({ name, role }).eq('id', user.id).select().single();
+          user = updated || user;
+        }
+
+        localStorage.setItem('user', JSON.stringify(user));
+
+        if (role === 'driver') {
+          window.location.href = 'driver-home.html'; return;
+        }
+
+        // Trader: resume active job if one exists
+        const { data: activeJob } = await supabase
+          .from('jobs').select('id').eq('trader_id', user.id)
+          .neq('status', 'completed').neq('status', 'cancelled')
+          .limit(1).maybeSingle();
+
+        window.location.href = activeJob ? 'job-status.html' : 'trader-home.html';
+      } catch (err) {
+        console.error('Login error:', err);
+        btn.disabled = false; btn.textContent = 'Continue';
+        alert('Something went wrong. Please try again.');
+      }
+    }
+
+    document.getElementById('phone').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleContinue();
+    });
+  </script>
+
+</body>
+</html>

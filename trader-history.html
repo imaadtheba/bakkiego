@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BakkieGo — My Trips</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #0D1117;
+      color: #F0F4F8;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      padding: 20px;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      color: #8B95A1;
+      text-decoration: none;
+      font-size: 15px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+
+    /* ── Trip cards ── */
+    .trip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .trip-card {
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .trip-icon {
+      font-size: 26px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .trip-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trip-area {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trip-detail {
+      font-size: 13px;
+      color: #8B95A1;
+      margin-top: 3px;
+    }
+
+    .trip-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: #00C853;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      color: #8B95A1;
+      font-size: 15px;
+      padding: 48px 0;
+      text-align: center;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+<div class="page">
+  <a href="trader-home.html" class="back-link">← Home</a>
+  <h1>My Trips</h1>
+  <div class="trip-list" id="trip-list"></div>
+</div>
+<script>
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user) { window.location.replace('index.html'); }
+
+async function loadHistory() {
+  const listEl = document.getElementById('trip-list');
+  listEl.innerHTML = '<div class="empty-state">Loading…</div>';
+
+  const { data: trips } = await supabase
+    .from('jobs')
+    .select('area, offer_price, counter_price, completed_at, driver:users!driver_id(name)')
+    .eq('trader_id', user.id).eq('status', 'completed')
+    .order('completed_at', { ascending: false });
+
+  listEl.innerHTML = '';
+  if (!trips || trips.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">No completed trips yet</div>'; return;
+  }
+
+  trips.forEach(t => {
+    const price = t.counter_price || t.offer_price;
+    const date  = new Date(t.completed_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    const card  = document.createElement('div');
+    card.className = 'trip-card';
+    card.innerHTML = `
+      <span class="trip-icon">📦</span>
+      <div class="trip-meta">
+        <div class="trip-area">${t.area}</div>
+        <div class="trip-detail">${date}</div>
+      </div>
+      <div class="trip-price">R${price}</div>
+    `;
+    listEl.appendChild(card);
+  });
+}
+
+loadHistory();
+</script>
+</body>
+</html>

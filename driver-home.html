@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BakkieGo — Driver</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #0D1117;
+      color: #F0F4F8;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      padding: 48px 20px 48px;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── Greeting ── */
+    .greeting { margin-bottom: 4px; }
+
+    .greeting-hey {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .greeting-name {
+      font-size: 15px;
+      color: #8B95A1;
+      margin-top: 5px;
+      min-height: 20px;
+    }
+
+    /* ── Toggle card ── */
+    .toggle-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #161B22;
+      border: 2px solid #2A3340;
+      border-radius: 16px;
+      padding: 18px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.25s;
+    }
+
+    .toggle-card.online { border-color: #00C853; }
+    .toggle-card:active { opacity: 0.8; }
+
+    .toggle-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #8B95A1;
+      flex-shrink: 0;
+      transition: background 0.25s;
+    }
+
+    .toggle-card.online .toggle-dot { background: #00C853; }
+
+    .toggle-text {
+      flex: 1;
+    }
+
+    .toggle-status {
+      font-size: 15px;
+      font-weight: 700;
+      color: #8B95A1;
+      transition: color 0.25s;
+    }
+
+    .toggle-card.online .toggle-status { color: #00C853; }
+
+    .toggle-hint {
+      font-size: 12px;
+      color: #8B95A1;
+      margin-top: 2px;
+    }
+
+    .toggle-switch {
+      width: 46px;
+      height: 26px;
+      background: #2A3340;
+      border-radius: 13px;
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.25s;
+    }
+
+    .toggle-card.online .toggle-switch { background: #00C853; }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #F0F4F8;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.25s;
+    }
+
+    .toggle-card.online .toggle-switch::after { transform: translateX(20px); }
+
+    /* ── Stats ── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8B95A1;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    /* ── Section header ── */
+    .section-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8B95A1;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 6px;
+    }
+
+    /* ── Job feed ── */
+    .job-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .empty-state {
+      color: #8B95A1;
+      font-size: 14px;
+      padding: 20px 0;
+    }
+
+    /* ── Job card ── */
+    .job-card {
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .job-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .job-area {
+      font-size: 17px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .job-offer {
+      font-size: 16px;
+      font-weight: 700;
+      color: #00C853;
+    }
+
+    .job-time {
+      font-size: 12px;
+      color: #8B95A1;
+      margin-bottom: 16px;
+    }
+
+    /* Job actions */
+    .job-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-accept {
+      flex: 1;
+      background: #00C853;
+      color: #0D1117;
+      border: none;
+      border-radius: 18px;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-accept:active { opacity: 0.84; transform: scale(0.98); }
+
+    .btn-counter {
+      flex: 1;
+      background: transparent;
+      color: #F0F4F8;
+      border: 1.5px solid #2A3340;
+      border-radius: 18px;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+
+    .btn-counter:active { opacity: 0.6; }
+
+    /* Counter form */
+    .counter-form {
+      margin-top: 12px;
+      display: none;
+    }
+
+    .counter-form.open { display: block; }
+
+    .counter-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .counter-input {
+      flex: 1;
+      background: #0D1117;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: #F0F4F8;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+
+    .counter-input::placeholder { color: #8B95A1; }
+    .counter-input:focus { border-color: #00C853; }
+    .counter-input.error { border-color: #FF6D00; }
+
+    .counter-input::-webkit-inner-spin-button,
+    .counter-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .counter-input { -moz-appearance: textfield; }
+
+    .btn-submit {
+      background: #FF6D00;
+      color: #0D1117;
+      border: none;
+      border-radius: 18px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: opacity 0.2s;
+    }
+
+    .btn-submit:active { opacity: 0.84; }
+
+    .counter-sent {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FF6D00;
+      padding-top: 2px;
+    }
+
+    /* ── Offline message ── */
+    .offline-msg {
+      text-align: center;
+      color: #8B95A1;
+      font-size: 15px;
+      padding: 40px 0 0;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+<div class="page">
+
+  <!-- Greeting -->
+  <div class="greeting">
+    <div class="greeting-hey">Sawubona 👋</div>
+    <div class="greeting-name" id="driver-name"></div>
+  </div>
+
+  <!-- Online / offline toggle -->
+  <div class="toggle-card" id="toggle-card" onclick="toggleOnline()">
+    <div class="toggle-dot" id="toggle-dot"></div>
+    <div class="toggle-text">
+      <div class="toggle-status" id="toggle-status"></div>
+      <div class="toggle-hint" id="toggle-hint"></div>
+    </div>
+    <div class="toggle-switch" id="toggle-switch"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Today's Earnings</div>
+      <div class="stat-value" id="stat-earnings">R0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Trips Today</div>
+      <div class="stat-value" id="stat-trips">0</div>
+    </div>
+  </div>
+
+  <!-- Job feed (online) -->
+  <div id="job-section" style="display:none">
+    <div class="section-header" style="margin-bottom:12px">Available Jobs</div>
+    <div class="job-list" id="job-list"></div>
+  </div>
+
+  <!-- Offline state -->
+  <div class="offline-msg" id="offline-msg" style="display:none">
+    Go online to see jobs
+  </div>
+
+</div>
+<script>
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user) { window.location.replace('index.html'); }
+
+let isOnline = localStorage.getItem('driver_online') === 'true';
+
+/* ── Toggle ── */
+function toggleOnline() {
+  isOnline = !isOnline;
+  localStorage.setItem('driver_online', String(isOnline));
+  applyOnlineState();
+}
+
+function applyOnlineState() {
+  const card = document.getElementById('toggle-card');
+  document.getElementById('toggle-status').textContent = isOnline ? 'ONLINE'  : 'OFFLINE';
+  document.getElementById('toggle-hint').textContent   = isOnline ? 'Tap to go offline' : 'Tap to go online';
+
+  if (isOnline) {
+    card.classList.add('online');
+    document.getElementById('job-section').style.display = '';
+    document.getElementById('offline-msg').style.display = 'none';
+    renderJobs();
+  } else {
+    card.classList.remove('online');
+    document.getElementById('job-section').style.display = 'none';
+    document.getElementById('offline-msg').style.display = '';
+  }
+}
+
+/* ── Stats ── */
+async function loadStats() {
+  const { data: jobs } = await supabase
+    .from('jobs').select('offer_price, counter_price, completed_at')
+    .eq('driver_id', user.id).eq('status', 'completed');
+
+  const todayStr   = new Date().toDateString();
+  const todayJobs  = (jobs || []).filter(j => new Date(j.completed_at).toDateString() === todayStr);
+  const earnings   = todayJobs.reduce((sum, j) => sum + (j.counter_price || j.offer_price || 0), 0);
+
+  document.getElementById('stat-earnings').textContent = `R${earnings}`;
+  document.getElementById('stat-trips').textContent    = todayJobs.length;
+}
+
+/* ── Jobs ── */
+async function patchJob(id, updates) {
+  const { error } = await supabase.from('jobs').update(updates).eq('id', id);
+  if (error) console.error('patchJob error:', error);
+}
+
+async function renderJobs() {
+  const listEl = document.getElementById('job-list');
+  listEl.innerHTML = '<div class="empty-state">Loading…</div>';
+
+  try {
+    const { data: jobs, error } = await supabase
+      .from('jobs')
+      .select('*, trader:users!trader_id(name, phone)')
+      .or(`driver_id.is.null,driver_id.eq.${user.id}`)
+      .neq('status', 'completed')
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    listEl.innerHTML = '';
+    if (!jobs || jobs.length === 0) {
+      listEl.innerHTML = '<div class="empty-state">No jobs available</div>';
+      return;
+    }
+    jobs.forEach(job => listEl.appendChild(buildJobCard(job)));
+  } catch (err) {
+    console.error('renderJobs error:', err);
+    listEl.innerHTML = '<div class="empty-state">Failed to load jobs</div>';
+  }
+}
+
+function buildJobCard(job) {
+  const id      = job.id;
+  const isMyJob = job.driver_id === user.id;
+  const price   = job.counter_price || job.offer_price;
+  const card    = document.createElement('div');
+  card.className = 'job-card';
+
+  let actionsHTML = '';
+
+  if (!isMyJob && job.status === 'posted') {
+    // Available — offer accept or counter
+    actionsHTML = `
+      <div class="job-actions" id="actions-${id}">
+        <button class="btn-accept"  onclick="acceptJob('${id}')">ACCEPT</button>
+        <button class="btn-counter" onclick="openCounter('${id}')">COUNTER</button>
+      </div>
+      <div class="counter-form" id="counter-form-${id}">
+        <div class="counter-row">
+          <input
+            type="number"
+            class="counter-input"
+            id="counter-input-${id}"
+            placeholder="Your price (R)"
+            inputmode="numeric"
+            min="1"
+          >
+          <button class="btn-submit" onclick="submitCounter('${id}')">Submit</button>
+        </div>
+      </div>`;
+  } else if (isMyJob && job.status === 'countered') {
+    actionsHTML = `<div class="counter-sent">Counter sent: R${job.counter_price} — waiting for trader</div>`;
+  } else if (isMyJob && job.status === 'accepted') {
+    actionsHTML = `<button class="btn-accept" onclick="startJob('${id}')">START JOB →</button>`;
+  } else if (isMyJob && job.status === 'in_progress') {
+    actionsHTML = `<div class="counter-sent">Job in progress</div>`;
+  }
+
+  card.innerHTML = `
+    <div class="job-meta">
+      <span class="job-area">${job.area}</span>
+      <span class="job-offer">R${price}</span>
+    </div>
+    <div class="job-time">${timeAgo(job.created_at)}</div>
+    ${actionsHTML}
+  `;
+
+  return card;
+}
+
+async function acceptJob(id) {
+  try {
+    await patchJob(id, { driver_id: user.id, status: 'accepted' });
+    localStorage.setItem('driver_active_job_id', id);
+    window.location.href = 'driver-job.html';
+  } catch (err) {
+    console.error('acceptJob error:', err);
+    alert('Failed to accept job. Please try again.');
+  }
+}
+
+function openCounter(id) {
+  document.getElementById(`actions-${id}`).style.display = 'none';
+  document.getElementById(`counter-form-${id}`).classList.add('open');
+  setTimeout(() => document.getElementById(`counter-input-${id}`).focus(), 80);
+}
+
+async function submitCounter(id) {
+  const inputEl = document.getElementById(`counter-input-${id}`);
+  const val     = parseInt(inputEl.value, 10);
+  if (!val || val <= 0) {
+    inputEl.classList.add('error');
+    setTimeout(() => inputEl.classList.remove('error'), 1200); return;
+  }
+  try {
+    await patchJob(id, { driver_id: user.id, counter_price: val, status: 'countered' });
+    document.getElementById(`counter-form-${id}`).innerHTML =
+      `<div class="counter-sent">Counter sent: R${val} — waiting for trader</div>`;
+  } catch (err) {
+    console.error('submitCounter error:', err);
+    alert('Failed to send counter. Please try again.');
+  }
+}
+
+function startJob(id) {
+  localStorage.setItem('driver_active_job_id', id);
+  window.location.href = 'driver-job.html';
+}
+
+function setupRealtime() {
+  supabase.channel('driver-feed')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, () => {
+      if (isOnline) renderJobs();
+    })
+    .subscribe();
+}
+
+/* ── Helpers ── */
+function timeAgo(ts) {
+  const mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (mins < 1)  return 'Just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  return hrs < 24 ? `${hrs} hr ago` : 'Earlier today';
+}
+
+/* ── Init ── */
+document.getElementById('driver-name').textContent = user.name || user.phone || '';
+
+loadStats();
+applyOnlineState();
+setupRealtime();
+</script>
+</body>
+</html>

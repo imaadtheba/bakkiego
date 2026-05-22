@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BakkieGo</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #0D1117;
+      color: #F0F4F8;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      padding: 48px 20px;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100dvh - 96px);
+    }
+
+    /* Greeting */
+    .greeting {
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .greeting-hey {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .greeting-name {
+      font-size: 15px;
+      color: #8B95A1;
+      margin-top: 6px;
+      min-height: 20px;
+    }
+
+    /* CTA button */
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: #00C853;
+      color: #0D1117;
+      border: none;
+      border-radius: 18px;
+      padding: 22px 20px;
+      font-size: 17px;
+      font-weight: 800;
+      font-family: inherit;
+      letter-spacing: 0.4px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+      margin-bottom: 14px;
+    }
+
+    .cta-btn:active {
+      opacity: 0.84;
+      transform: scale(0.98);
+    }
+
+    /* Info card */
+    .info-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+
+    .info-card-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .info-card-text {
+      flex: 1;
+    }
+
+    .info-card-place {
+      font-size: 13px;
+      font-weight: 600;
+      color: #8B95A1;
+    }
+
+    .info-card-tagline {
+      font-size: 12px;
+      color: #8B95A1;
+      margin-top: 2px;
+      opacity: 0.7;
+    }
+
+    /* Active job banner */
+    .active-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: #FF6D00;
+      color: #0D1117;
+      border-radius: 16px;
+      padding: 16px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      margin-bottom: 14px;
+      transition: opacity 0.2s ease;
+    }
+
+    .active-banner.visible {
+      display: flex;
+    }
+
+    .active-banner:active {
+      opacity: 0.84;
+    }
+
+    /* Trips section */
+    .section {
+      margin-top: 28px;
+      flex: 1;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8B95A1;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .trips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .trip-card {
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .trip-icon {
+      font-size: 26px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .trip-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trip-area {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trip-load {
+      font-size: 13px;
+      color: #8B95A1;
+      margin-top: 3px;
+    }
+
+    .trip-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: #00C853;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      color: #8B95A1;
+      font-size: 14px;
+      padding: 24px 0 8px;
+    }
+
+    /* Footer */
+    .market-name {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 11px;
+      color: #8B95A1;
+      letter-spacing: 0.3px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+<div class="page">
+
+  <div class="greeting">
+    <div class="greeting-hey">Sawubona 👋</div>
+    <div class="greeting-name" id="greeting-name"></div>
+  </div>
+
+  <a href="job-post.html" class="cta-btn">I NEED A BAKKIE 🚛</a>
+
+  <div class="info-card">
+    <span class="info-card-icon">📍</span>
+    <div class="info-card-text">
+      <div class="info-card-place">Tshwane Fresh Produce Market</div>
+      <div class="info-card-tagline">Post a job, get a bakkie in minutes</div>
+    </div>
+  </div>
+
+  <a href="job-status.html" class="active-banner" id="active-banner">
+    <span>You have an active job</span>
+    <span>→</span>
+  </a>
+
+  <div class="section">
+    <div class="section-label">Recent Trips</div>
+    <div class="trips-list" id="trips-list"></div>
+  </div>
+
+  <div class="market-name">
+    <a href="trader-history.html" style="color:#8B95A1;text-decoration:none;display:block;margin-bottom:8px">Trip history →</a>
+    Tshwane Fresh Produce Market
+  </div>
+
+</div>
+  <script>
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) { window.location.replace('index.html'); }
+
+    document.getElementById('greeting-name').textContent = user.name || user.phone || '';
+
+    async function loadPage() {
+      // Active job banner
+      const { data: activeJob } = await supabase
+        .from('jobs').select('id').eq('trader_id', user.id)
+        .neq('status', 'completed').neq('status', 'cancelled')
+        .limit(1).maybeSingle();
+      if (activeJob) document.getElementById('active-banner').classList.add('visible');
+
+      // Recent completed trips
+      const listEl = document.getElementById('trips-list');
+      const { data: trips } = await supabase
+        .from('jobs')
+        .select('area, offer_price, counter_price, completed_at')
+        .eq('trader_id', user.id).eq('status', 'completed')
+        .order('completed_at', { ascending: false }).limit(10);
+
+      if (!trips || trips.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No trips yet</div>';
+      } else {
+        listEl.innerHTML = '';
+        trips.forEach(trip => {
+          const price = trip.counter_price || trip.offer_price;
+          const date  = trip.completed_at
+            ? new Date(trip.completed_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })
+            : '';
+          const card = document.createElement('div');
+          card.className = 'trip-card';
+          card.innerHTML = `
+            <span class="trip-icon">📦</span>
+            <div class="trip-meta">
+              <div class="trip-area">${trip.area ?? '—'}</div>
+              <div class="trip-load">${date}</div>
+            </div>
+            <div class="trip-price">R${price ?? '0'}</div>
+          `;
+          listEl.appendChild(card);
+        });
+      }
+    }
+
+    loadPage();
+  </script>
+
+</body>
+</html>

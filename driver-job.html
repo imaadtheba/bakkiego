@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BakkieGo — Active Job</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #0D1117;
+      color: #F0F4F8;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      padding: 20px;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .back-link {
+      color: #8B95A1;
+      text-decoration: none;
+      font-size: 15px;
+    }
+
+    /* ── Job header ── */
+    .job-header {
+      margin-top: 4px;
+    }
+
+    .job-area {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .job-price {
+      font-size: 22px;
+      font-weight: 700;
+      color: #00C853;
+    }
+
+    /* ── Info card ── */
+    .info-card {
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 4px 20px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #2A3340;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 14px; color: #8B95A1; }
+    .info-value { font-size: 14px; font-weight: 600; text-align: right; }
+    .info-value.green { color: #00C853; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { opacity: 0.84; transform: scale(0.98); }
+
+    .btn-green   { background: #00C853; color: #0D1117; }
+    .btn-orange  { background: #FF6D00; color: #0D1117; }
+    .btn-outline { background: transparent; color: #F0F4F8; border: 1.5px solid #2A3340; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8B95A1;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #2A3340;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+<div class="page">
+  <a href="driver-home.html" class="back-link">← Jobs</a>
+
+  <div class="job-header">
+    <div class="job-area" id="job-area">—</div>
+    <div class="job-price" id="job-price">—</div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-label">Area</span>
+      <span class="info-value" id="detail-area">—</span>
+    </div>
+    <div class="info-row" id="address-row" style="display:none">
+      <span class="info-label">Deliver to</span>
+      <span class="info-value" id="detail-address" style="max-width:60%;word-break:break-word;text-align:right">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Agreed price</span>
+      <span class="info-value green" id="detail-price">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Payment</span>
+      <span class="info-value">Cash</span>
+    </div>
+  </div>
+
+  <div class="section-label">Contact &amp; Navigation</div>
+
+  <a id="btn-whatsapp" href="#" class="btn btn-green">📱 WhatsApp Trader</a>
+  <a
+    id="btn-directions"
+    href="#"
+    target="_blank"
+    class="btn btn-outline"
+  >🗺 Get Directions</a>
+
+  <div class="divider"></div>
+
+  <div class="section-label">Job Progress</div>
+
+  <button class="btn btn-orange" id="btn-pickup" onclick="pickup()">I've picked up the load</button>
+  <button class="btn btn-green"  id="btn-done"   onclick="jobDone()" style="display:none">Job done — cash received ✓</button>
+</div>
+<script>
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user) { window.location.replace('index.html'); }
+
+let job = null;
+
+function render() {
+  if (!job) return;
+  const price = job.counter_price || job.offer_price;
+
+  document.getElementById('job-area').textContent     = job.area;
+  document.getElementById('job-price').textContent    = `R${price}`;
+  document.getElementById('detail-area').textContent  = job.area;
+  document.getElementById('detail-price').textContent = `R${price}`;
+
+  if (job.address) {
+    document.getElementById('detail-address').textContent = job.address;
+    document.getElementById('address-row').style.display  = '';
+    document.getElementById('btn-directions').href =
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.address)}`;
+  } else {
+    document.getElementById('btn-directions').href =
+      'https://www.google.com/maps/dir/?api=1&destination=-25.7479,28.1878';
+  }
+
+  const traderPhone = job.trader?.phone || '';
+  const waPhone = traderPhone.startsWith('0') ? '27' + traderPhone.slice(1) : traderPhone.replace(/\D/g,'');
+  document.getElementById('btn-whatsapp').href = waPhone ? `https://wa.me/${waPhone}` : '#';
+
+  document.getElementById('btn-pickup').style.display = job.status === 'in_progress' ? 'none' : '';
+  document.getElementById('btn-done').style.display   = job.status === 'in_progress' ? ''     : 'none';
+}
+
+async function pickup() {
+  const { error } = await supabase.from('jobs').update({ status: 'in_progress' }).eq('id', job.id);
+  if (error) { alert('Failed to update status.'); return; }
+  job.status = 'in_progress';
+  render();
+}
+
+async function jobDone() {
+  const { error } = await supabase.from('jobs')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', job.id);
+  if (error) { alert('Failed to complete job.'); return; }
+  localStorage.removeItem('driver_active_job_id');
+  location.href = 'driver-home.html';
+}
+
+async function init() {
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*, trader:users!trader_id(name, phone)')
+      .eq('driver_id', user.id)
+      .in('status', ['accepted', 'in_progress'])
+      .order('created_at', { ascending: false })
+      .limit(1).maybeSingle();
+
+    if (error) throw error;
+    if (!data) { window.location.replace('driver-home.html'); return; }
+
+    job = data;
+    render();
+  } catch (err) {
+    console.error('driver-job init error:', err);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

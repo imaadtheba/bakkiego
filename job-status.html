@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BakkieGo — Job Status</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #0D1117;
+      color: #F0F4F8;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      padding: 20px;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: calc(100dvh - 40px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .back-link {
+      color: #8B95A1;
+      text-decoration: none;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    #status-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Shared layout ── */
+    .view-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 0 48px;
+    }
+
+    .view-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .view-sub {
+      font-size: 15px;
+      color: #8B95A1;
+    }
+
+    /* ── Summary card ── */
+    .info-card {
+      width: 100%;
+      background: #161B22;
+      border: 1.5px solid #2A3340;
+      border-radius: 16px;
+      padding: 4px 20px;
+      margin: 24px 0;
+      text-align: left;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #2A3340;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label { font-size: 14px; color: #8B95A1; }
+
+    .info-value { font-size: 14px; font-weight: 600; text-align: right; }
+    .info-value.green  { color: #00C853; }
+    .info-value.orange { color: #FF6D00; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: block;
+      width: 100%;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 10px;
+    }
+
+    .btn:first-of-type { margin-top: 0; }
+    .btn:active { opacity: 0.84; transform: scale(0.98); }
+
+    .btn-green   { background: #00C853; color: #0D1117; }
+    .btn-outline { background: transparent; color: #F0F4F8; border: 1.5px solid #2A3340; }
+    .btn-muted   { background: transparent; color: #8B95A1; border: 1.5px solid #2A3340; font-size: 14px; padding: 14px; }
+
+    .btn-stack { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .btn-stack .btn { margin-top: 0; }
+
+    /* ── Pulse (posted state) ── */
+    @keyframes pulse-ring {
+      0%   { transform: scale(1);   opacity: 0.6; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+
+    .pulse-wrap {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 32px;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid #00C853;
+      animation: pulse-ring 2.4s ease-out infinite;
+    }
+
+    .pulse-ring:nth-child(2) { animation-delay: 0.8s; }
+    .pulse-ring:nth-child(3) { animation-delay: 1.6s; }
+
+    .pulse-core {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0, 200, 83, 0.1);
+      border: 2px solid rgba(0, 200, 83, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+    }
+
+    /* ── Counter offer state ── */
+    .counter-amount {
+      font-size: 56px;
+      font-weight: 800;
+      color: #FF6D00;
+      line-height: 1;
+      margin: 16px 0 8px;
+    }
+
+    .counter-original {
+      font-size: 14px;
+      color: #8B95A1;
+      margin-bottom: 8px;
+    }
+
+    /* ── Accepted state ── */
+    .big-emoji {
+      font-size: 60px;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+
+    .driver-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 16px 0 4px;
+    }
+
+    .agreed-price {
+      font-size: 40px;
+      font-weight: 800;
+      color: #00C853;
+      margin: 16px 0 4px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+<div class="page">
+  <a href="trader-home.html" class="back-link">← Home</a>
+  <div id="status-content"></div>
+</div>
+<script>
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user) { window.location.replace('index.html'); }
+
+let job = null;
+
+async function findMyJob() {
+  const { data } = await supabase
+    .from('jobs')
+    .select('*, driver:users!driver_id(name, phone)')
+    .eq('trader_id', user.id)
+    .neq('status', 'completed')
+    .neq('status', 'cancelled')
+    .order('created_at', { ascending: false })
+    .limit(1).maybeSingle();
+  return data;
+}
+
+async function patchJob(updates) {
+  if (!job) return;
+  const { error } = await supabase.from('jobs').update(updates).eq('id', job.id);
+  if (error) { console.error('patchJob error:', error); return; }
+  Object.assign(job, updates);
+}
+
+function render() {
+  const el = document.getElementById('status-content');
+  if (!job) { window.location.replace('trader-home.html'); return; }
+  switch (job.status) {
+    case 'posted':      el.innerHTML = viewPosted();      break;
+    case 'countered': el.innerHTML = viewNegotiating(); break;
+    case 'accepted':    el.innerHTML = viewAccepted();    break;
+    case 'completed':   el.innerHTML = viewCompleted();   break;
+    default:            el.innerHTML = viewPosted();
+  }
+  bindActions();
+}
+
+function viewPosted() {
+  return `
+    <div class="view-center">
+      <div class="pulse-wrap">
+        <div class="pulse-ring"></div><div class="pulse-ring"></div>
+        <div class="pulse-ring"></div><div class="pulse-core">🚛</div>
+      </div>
+      <div class="view-title">Looking for a driver...</div>
+      <div class="view-sub">${job.area} &middot; R${job.offer_price}</div>
+      ${job.address ? `<div class="view-sub" style="margin-top:6px;font-size:13px">Delivering to: ${job.address}</div>` : ''}
+      <div class="btn-stack" style="margin-top:40px">
+        <button class="btn btn-muted" id="btn-cancel">Cancel job</button>
+      </div>
+    </div>`;
+}
+
+function viewNegotiating() {
+  return `
+    <div class="view-center">
+      <div class="view-sub" style="margin-bottom:4px">A driver wants to negotiate</div>
+      <div class="view-title">Counter offer</div>
+      <div class="counter-amount">R${job.counter_price}</div>
+      <div class="counter-original">Your original offer: R${job.offer_price}</div>
+      <div class="btn-stack" style="margin-top:24px;width:100%">
+        <button class="btn btn-green"   id="btn-accept-counter">Accept R${job.counter_price}</button>
+        <button class="btn btn-outline" id="btn-decline">Decline</button>
+      </div>
+    </div>`;
+}
+
+function viewAccepted() {
+  const price       = job.counter_price || job.offer_price;
+  const driverName  = job.driver?.name  || 'Your driver';
+  const driverPhone = job.driver?.phone || '';
+  const waPhone     = driverPhone.startsWith('0') ? '27' + driverPhone.slice(1) : driverPhone.replace(/\D/g,'');
+  return `
+    <div class="view-center">
+      <div class="big-emoji">✅</div>
+      <div class="view-title">Bakkie confirmed!</div>
+      <div class="view-sub">Your driver is on the way</div>
+      <div class="driver-name">${driverName}</div>
+      <div class="agreed-price">R${price}</div>
+      <div class="info-card">
+        <div class="info-row"><span class="info-label">Area</span><span class="info-value">${job.area}</span></div>
+        ${job.address ? `<div class="info-row"><span class="info-label">Delivering to</span><span class="info-value">${job.address}</span></div>` : ''}
+        <div class="info-row"><span class="info-label">Agreed price</span><span class="info-value green">R${price}</span></div>
+        <div class="info-row"><span class="info-label">Payment</span><span class="info-value">Cash to driver</span></div>
+      </div>
+      <a href="${waPhone ? `https://wa.me/${waPhone}` : '#'}" class="btn btn-green" style="width:100%">WhatsApp ${driverName}</a>
+    </div>`;
+}
+
+function viewCompleted() {
+  const price = job.counter_price || job.offer_price;
+  return `
+    <div class="view-center">
+      <div class="big-emoji">🎉</div>
+      <div class="view-title">Trip complete!</div>
+      <div class="view-sub" style="margin-bottom:0">${job.area}</div>
+      <div class="info-card">
+        <div class="info-row"><span class="info-label">Area</span><span class="info-value">${job.area}</span></div>
+        ${job.address ? `<div class="info-row"><span class="info-label">Delivered to</span><span class="info-value">${job.address}</span></div>` : ''}
+        <div class="info-row"><span class="info-label">Paid</span><span class="info-value green">R${price}</span></div>
+        <div class="info-row"><span class="info-label">Payment</span><span class="info-value">Cash</span></div>
+      </div>
+      <button class="btn btn-green" style="width:100%" onclick="location.href='trader-home.html'">Book another bakkie</button>
+    </div>`;
+}
+
+function bindActions() {
+  const btnCancel = document.getElementById('btn-cancel');
+  if (btnCancel) btnCancel.addEventListener('click', async () => {
+    await patchJob({ status: 'cancelled' });
+    location.href = 'trader-home.html';
+  });
+
+  const btnAccept = document.getElementById('btn-accept-counter');
+  if (btnAccept) btnAccept.addEventListener('click', async () => {
+    await patchJob({ status: 'accepted' });
+    // Re-fetch with driver join so driver name/phone is available
+    const { data } = await supabase
+      .from('jobs').select('*, driver:users!driver_id(name, phone)').eq('id', job.id).single();
+    if (data) job = data;
+    render();
+  });
+
+  const btnDecline = document.getElementById('btn-decline');
+  if (btnDecline) btnDecline.addEventListener('click', async () => {
+    await patchJob({ status: 'cancelled' });
+    location.href = 'trader-home.html';
+  });
+}
+
+function setupRealtime() {
+  supabase.channel('job-status-' + job.id)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
+        filter: `id=eq.${job.id}` }, async () => {
+      const { data } = await supabase
+        .from('jobs').select('*, driver:users!driver_id(name, phone)').eq('id', job.id).single();
+      if (data) { job = data; render(); }
+    })
+    .subscribe();
+}
+
+async function init() {
+  job = await findMyJob();
+  if (!job) { window.location.replace('trader-home.html'); return; }
+  render();
+  setupRealtime();
+}
+
+init();
+</script>
+</body>
+</html>
