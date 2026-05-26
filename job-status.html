@@ -311,7 +311,8 @@ function viewCompleted() {
 function bindActions() {
   const btnCancel = document.getElementById('btn-cancel');
   if (btnCancel) btnCancel.addEventListener('click', async () => {
-    await patchJob({ status: 'cancelled' });
+    const { error } = await supabase.from('jobs').delete().eq('id', job.id);
+    if (error) { console.error('Cancel error:', error); alert('Failed to cancel job.'); return; }
     location.href = 'trader-home.html';
   });
 
@@ -327,7 +328,8 @@ function bindActions() {
 
   const btnDecline = document.getElementById('btn-decline');
   if (btnDecline) btnDecline.addEventListener('click', async () => {
-    await patchJob({ status: 'cancelled' });
+    const { error } = await supabase.from('jobs').delete().eq('id', job.id);
+    if (error) { console.error('Decline error:', error); alert('Failed to decline offer.'); return; }
     location.href = 'trader-home.html';
   });
 }

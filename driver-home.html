@@ -530,11 +530,16 @@ function setupRealtime() {
 
 /* ── Helpers ── */
 function timeAgo(ts) {
-  const mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (!ts) return '';
+  // Append Z so browsers always parse as UTC, not local time
+  const utc    = (ts.includes('+') || ts.endsWith('Z')) ? ts : ts + 'Z';
+  const diffMs = Date.now() - new Date(utc).getTime();
+  const mins   = Math.floor(diffMs / 60000);
   if (mins < 1)  return 'Just now';
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = Math.floor(mins / 60);
-  return hrs < 24 ? `${hrs} hr ago` : 'Earlier today';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(diffMs / 3600000);
+  if (hrs < 24)  return `${hrs}h ago`;
+  return `${Math.floor(diffMs / 86400000)}d ago`;
 }
 
 /* ── Init ── */
