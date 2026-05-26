@@ -311,8 +311,19 @@ function viewCompleted() {
 function bindActions() {
   const btnCancel = document.getElementById('btn-cancel');
   if (btnCancel) btnCancel.addEventListener('click', async () => {
-    const { error } = await supabase.from('jobs').delete().eq('id', job.id);
-    if (error) { console.error('Cancel error:', error); alert('Failed to cancel job.'); return; }
+    if (!confirm('Cancel this job?')) return;
+    const { data, error } = await supabase
+      .from('jobs').delete().eq('id', job.id).select();
+    if (error) {
+      console.error('Cancel error:', error);
+      alert('Failed to cancel: ' + error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      console.warn('Delete returned no rows — check Supabase RLS policies on jobs table');
+      alert('Could not cancel job. Check Supabase RLS policies.');
+      return;
+    }
     location.href = 'trader-home.html';
   });
 
@@ -337,12 +348,15 @@ function bindActions() {
 function setupRealtime() {
   supabase.channel('job-status-' + job.id)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
-        filter: `id=eq.${job.id}` }, async () => {
+        filter: `id=eq.${job.id}` }, async (payload) => {
+      console.log('Job updated (realtime):', payload.new?.status);
       const { data } = await supabase
         .from('jobs').select('*, driver:users!driver_id(name, phone)').eq('id', job.id).single();
       if (data) { job = data; render(); }
     })
-    .subscribe();
+    .subscribe((status, err) => {
+      console.log('job-status realtime:', status, err || '');
+    });
 }
 
 async function init() {

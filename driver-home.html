@@ -521,11 +521,14 @@ function startJob(id) {
 }
 
 function setupRealtime() {
-  supabase.channel('driver-feed')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, () => {
+  supabase.channel('driver-feed-' + user.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, (payload) => {
+      console.log('Feed updated (realtime):', payload.eventType, payload.new?.status || payload.old?.status);
       if (isOnline) renderJobs();
     })
-    .subscribe();
+    .subscribe((status, err) => {
+      console.log('driver-home realtime:', status, err || '');
+    });
 }
 
 /* ── Helpers ── */
