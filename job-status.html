@@ -210,7 +210,7 @@ let job = null;
 async function findMyJob() {
   const { data } = await supabase
     .from('jobs')
-    .select('*, driver:users!driver_id(name, phone)')
+    .select('*, driver:users!driver_id(name, phone, vehicle_model, vehicle_colour, vehicle_plate)')
     .eq('trader_id', user.id)
     .neq('status', 'completed')
     .neq('status', 'cancelled')
@@ -274,12 +274,15 @@ function viewAccepted() {
   const driverName  = job.driver?.name  || 'Your driver';
   const driverPhone = job.driver?.phone || '';
   const waPhone     = driverPhone.startsWith('0') ? '27' + driverPhone.slice(1) : driverPhone.replace(/\D/g,'');
+  const vehicle     = [job.driver?.vehicle_colour, job.driver?.vehicle_model, job.driver?.vehicle_plate]
+                        .filter(Boolean).join(' · ');
   return `
     <div class="view-center">
       <div class="big-emoji">✅</div>
       <div class="view-title">Bakkie confirmed!</div>
       <div class="view-sub">Your driver is on the way</div>
       <div class="driver-name">${driverName}</div>
+      ${vehicle ? `<div class="view-sub" style="margin-top:4px;font-size:13px">${vehicle}</div>` : ''}
       <div class="agreed-price">R${price}</div>
       <div class="info-card">
         <div class="info-row"><span class="info-label">Area</span><span class="info-value">${job.area}</span></div>
@@ -332,7 +335,7 @@ function bindActions() {
     await patchJob({ status: 'accepted' });
     // Re-fetch with driver join so driver name/phone is available
     const { data } = await supabase
-      .from('jobs').select('*, driver:users!driver_id(name, phone)').eq('id', job.id).single();
+      .from('jobs').select('*, driver:users!driver_id(name, phone, vehicle_model, vehicle_colour, vehicle_plate)').eq('id', job.id).single();
     if (data) job = data;
     render();
   });
@@ -351,7 +354,7 @@ function setupRealtime() {
         filter: `id=eq.${job.id}` }, async (payload) => {
       console.log('Job updated (realtime):', payload.new?.status);
       const { data } = await supabase
-        .from('jobs').select('*, driver:users!driver_id(name, phone)').eq('id', job.id).single();
+        .from('jobs').select('*, driver:users!driver_id(name, phone, vehicle_model, vehicle_colour, vehicle_plate)').eq('id', job.id).single();
       if (data) { job = data; render(); }
     })
     .subscribe((status, err) => {

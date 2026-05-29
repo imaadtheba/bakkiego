@@ -132,8 +132,14 @@
     }
 
     .bottom.visible {
-      max-height: 280px;
+      max-height: 560px;
       opacity: 1;
+    }
+
+    #vehicle-fields {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .phone-input {
@@ -234,6 +240,11 @@
         autocomplete="name"
         autocorrect="off"
       >
+      <div id="vehicle-fields">
+        <input type="text"  id="vehicle-model"  class="phone-input" placeholder="Vehicle make & model (e.g. Toyota Hilux)" autocorrect="off">
+        <input type="text"  id="vehicle-colour" class="phone-input" placeholder="Vehicle colour (e.g. White)" autocorrect="off">
+        <input type="text"  id="vehicle-plate"  class="phone-input" placeholder="Number plate (e.g. GP ABC 123)" autocorrect="off" style="text-transform:uppercase">
+      </div>
       <button class="continue-btn" onclick="handleContinue()">Continue</button>
     </div>
 
@@ -247,14 +258,17 @@
       const trader = document.getElementById('card-trader');
       const driver = document.getElementById('card-driver');
       const bottom = document.getElementById('bottom');
+      const vFields = document.getElementById('vehicle-fields');
       trader.classList.remove('selected', 'dimmed');
       driver.classList.remove('selected', 'dimmed');
       if (chosen === 'trader') {
         trader.classList.add('selected');
         driver.classList.add('dimmed');
+        vFields.style.display = 'none';
       } else {
         driver.classList.add('selected');
         trader.classList.add('dimmed');
+        vFields.style.display = 'flex';
       }
       bottom.classList.add('visible');
       setTimeout(() => document.getElementById('phone').focus(), 200);
@@ -275,6 +289,18 @@
         setTimeout(() => nameEl.classList.remove('error'), 1200); return;
       }
 
+      let vehicleData = {};
+      if (role === 'driver') {
+        const model  = document.getElementById('vehicle-model').value.trim();
+        const colour = document.getElementById('vehicle-colour').value.trim();
+        const plate  = document.getElementById('vehicle-plate').value.trim().toUpperCase();
+        if (!model || !colour || !plate) {
+          alert('Please fill in your vehicle details.');
+          return;
+        }
+        vehicleData = { vehicle_model: model, vehicle_colour: colour, vehicle_plate: plate };
+      }
+
       const btn = document.querySelector('.continue-btn');
       btn.disabled = true; btn.textContent = 'Loading…';
 
@@ -285,12 +311,12 @@
 
         if (!user) {
           const { data: created, error } = await supabase
-            .from('users').insert({ phone, name, role }).select().single();
+            .from('users').insert({ phone, name, role, ...vehicleData }).select().single();
           if (error) throw error;
           user = created;
         } else {
           const { data: updated } = await supabase
-            .from('users').update({ name, role }).eq('id', user.id).select().single();
+            .from('users').update({ name, role, ...vehicleData }).eq('id', user.id).select().single();
           user = updated || user;
         }
 
