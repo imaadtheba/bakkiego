@@ -165,7 +165,13 @@
 
   <div class="section-label">Job Progress</div>
 
-  <button class="btn btn-orange" id="btn-pickup" onclick="pickup()">I've picked up the load</button>
+  <button class="btn btn-orange" id="btn-on-the-way" onclick="onTheWay()">🚗 I'm On My Way</button>
+
+  <div id="banner-on-the-way" style="display:none;background:rgba(255,109,0,0.1);border:1.5px solid #FF6D00;border-radius:16px;padding:16px;text-align:center;color:#FF6D00;font-weight:700;font-size:15px">
+    🚗 You're on the way
+  </div>
+
+  <button class="btn btn-orange" id="btn-pickup" onclick="pickup()" style="display:none">✅ I've Arrived — Pickup load</button>
   <button class="btn btn-green"  id="btn-done"   onclick="jobDone()" style="display:none">Job done — cash received ✓</button>
 </div>
 <script>
@@ -203,8 +209,18 @@ function render() {
   const waPhone = traderPhone.startsWith('0') ? '27' + traderPhone.slice(1) : traderPhone.replace(/\D/g,'');
   document.getElementById('btn-whatsapp').href = waPhone ? `https://wa.me/${waPhone}` : '#';
 
-  document.getElementById('btn-pickup').style.display = job.status === 'in_progress' ? 'none' : '';
-  document.getElementById('btn-done').style.display   = job.status === 'in_progress' ? ''     : 'none';
+  const s = job.status;
+  document.getElementById('btn-on-the-way').style.display    = s === 'accepted'    ? ''     : 'none';
+  document.getElementById('banner-on-the-way').style.display = s === 'on_the_way'  ? ''     : 'none';
+  document.getElementById('btn-pickup').style.display        = s === 'on_the_way'  ? ''     : 'none';
+  document.getElementById('btn-done').style.display          = s === 'in_progress' ? ''     : 'none';
+}
+
+async function onTheWay() {
+  const { error } = await supabase.from('jobs').update({ status: 'on_the_way' }).eq('id', job.id);
+  if (error) { alert('Failed to update status.'); return; }
+  job.status = 'on_the_way';
+  render();
 }
 
 async function pickup() {
@@ -229,7 +245,7 @@ async function init() {
       .from('jobs')
       .select('*, trader:users!trader_id(name, phone)')
       .eq('driver_id', user.id)
-      .in('status', ['accepted', 'in_progress'])
+      .in('status', ['accepted', 'on_the_way', 'in_progress'])
       .order('created_at', { ascending: false })
       .limit(1).maybeSingle();
 

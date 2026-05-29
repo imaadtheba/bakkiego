@@ -230,10 +230,12 @@ function render() {
   const el = document.getElementById('status-content');
   if (!job) { window.location.replace('trader-home.html'); return; }
   switch (job.status) {
-    case 'posted':      el.innerHTML = viewPosted();      break;
-    case 'countered': el.innerHTML = viewNegotiating(); break;
-    case 'accepted':    el.innerHTML = viewAccepted();    break;
-    case 'completed':   el.innerHTML = viewCompleted();   break;
+    case 'posted':      el.innerHTML = viewPosted();                              break;
+    case 'countered':   el.innerHTML = viewNegotiating();                         break;
+    case 'accepted':    el.innerHTML = viewDriverStatus('✅', 'Bakkie confirmed!',     'Waiting for your driver'); break;
+    case 'on_the_way':  el.innerHTML = viewDriverStatus('🚗', 'Driver on the way!',   'Your bakkie is heading to you'); break;
+    case 'in_progress': el.innerHTML = viewDriverStatus('📦', 'Job in progress',       'Load has been picked up');       break;
+    case 'completed':   el.innerHTML = viewCompleted();                           break;
     default:            el.innerHTML = viewPosted();
   }
   bindActions();
@@ -269,7 +271,7 @@ function viewNegotiating() {
     </div>`;
 }
 
-function viewAccepted() {
+function viewDriverStatus(emoji, title, subtitle) {
   const price       = job.counter_price || job.offer_price;
   const driverName  = job.driver?.name  || 'Your driver';
   const driverPhone = job.driver?.phone || '';
@@ -278,9 +280,9 @@ function viewAccepted() {
                         .filter(Boolean).join(' · ');
   return `
     <div class="view-center">
-      <div class="big-emoji">✅</div>
-      <div class="view-title">Bakkie confirmed!</div>
-      <div class="view-sub">Your driver is on the way</div>
+      <div class="big-emoji">${emoji}</div>
+      <div class="view-title">${title}</div>
+      <div class="view-sub">${subtitle}</div>
       <div class="driver-name">${driverName}</div>
       ${vehicle ? `<div class="view-sub" style="margin-top:4px;font-size:13px">${vehicle}</div>` : ''}
       <div class="agreed-price">R${price}</div>
