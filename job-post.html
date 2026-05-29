@@ -209,6 +209,40 @@
     .address-input:focus { border-color: #00C853; }
     .address-input.error { border-color: #FF6D00; }
 
+    /* ── Load size ── */
+    .load-size-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .load-option {
+      background: #161B22;
+      border: 2px solid #2A3340;
+      border-radius: 16px;
+      padding: 14px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 0.2s, background 0.2s;
+      font-family: inherit;
+    }
+
+    .load-option:active { opacity: 0.7; }
+
+    .load-option.selected {
+      border-color: #00C853;
+      background: rgba(0, 200, 83, 0.08);
+    }
+
+    .load-icon  { font-size: 26px; line-height: 1; }
+    .load-label { color: #F0F4F8; font-weight: 700; font-size: 14px; }
+    .load-desc  { color: #8B95A1; font-size: 11px; }
+
     .suggested-note {
       font-size: 15px;
       color: #8B95A1;
@@ -277,6 +311,25 @@
       autocomplete="street-address"
     >
 
+    <label class="field-label">Load Size</label>
+    <div class="load-size-options">
+      <button type="button" class="load-option" data-size="small" onclick="selectLoadSize('small')">
+        <span class="load-icon">📦</span>
+        <span class="load-label">Small</span>
+        <span class="load-desc">Bags & boxes</span>
+      </button>
+      <button type="button" class="load-option" data-size="medium" onclick="selectLoadSize('medium')">
+        <span class="load-icon">🛒</span>
+        <span class="load-label">Medium</span>
+        <span class="load-desc">Half bakkie</span>
+      </button>
+      <button type="button" class="load-option" data-size="large" onclick="selectLoadSize('large')">
+        <span class="load-icon">🚛</span>
+        <span class="load-label">Large</span>
+        <span class="load-desc">Full bakkie</span>
+      </button>
+    </div>
+
     <label class="field-label" for="price-input">Your Offer</label>
     <div class="price-wrapper" id="price-wrapper">
       <span class="price-prefix">R</span>
@@ -299,6 +352,14 @@
 // Auth guard
 const _user = JSON.parse(localStorage.getItem('user') || 'null');
 if (!_user) { window.location.replace('index.html'); }
+
+let selectedLoadSize = null;
+
+function selectLoadSize(size) {
+  selectedLoadSize = size;
+  document.querySelectorAll('.load-option').forEach(btn => btn.classList.remove('selected'));
+  document.querySelector(`.load-option[data-size="${size}"]`).classList.add('selected');
+}
 
 const AREAS = [
   { name: "Marabastad / Belle Ombre", price: 150 },
@@ -418,6 +479,14 @@ async function postJob() {
     setTimeout(() => addrEl.classList.remove('error'), 1200); return;
   }
 
+  if (!selectedLoadSize) {
+    const first = document.querySelector('.load-option');
+    first.style.outline = '2px solid #FF6D00';
+    setTimeout(() => first.style.outline = '', 1200);
+    alert('Please select a load size.');
+    return;
+  }
+
   const val     = parseInt(document.getElementById('price-input').value, 10);
   const wrapper = document.getElementById('price-wrapper');
   if (!val || val <= 0) {
@@ -435,6 +504,7 @@ async function postJob() {
       trader_id:   user.id,
       area:        jobData.area,
       address:     address,
+      load_size:   selectedLoadSize,
       offer_price: val,
       status:      'posted'
     });

@@ -137,6 +137,10 @@
       <span class="info-label">Deliver to</span>
       <span class="info-value" id="detail-address" style="max-width:60%;word-break:break-word;text-align:right">—</span>
     </div>
+    <div class="info-row" id="load-row" style="display:none">
+      <span class="info-label">Load size</span>
+      <span class="info-value" id="detail-load">—</span>
+    </div>
     <div class="info-row">
       <span class="info-label">Agreed price</span>
       <span class="info-value green" id="detail-price">—</span>
@@ -187,6 +191,12 @@ function render() {
   } else {
     document.getElementById('btn-directions').href =
       'https://www.google.com/maps/dir/?api=1&destination=-25.7479,28.1878';
+  }
+
+  if (job.load_size) {
+    const labels = { small: '📦 Small load', medium: '🛒 Half bakkie', large: '🚛 Full bakkie' };
+    document.getElementById('detail-load').textContent = labels[job.load_size] || job.load_size;
+    document.getElementById('load-row').style.display  = '';
   }
 
   const traderPhone = job.trader?.phone || '';

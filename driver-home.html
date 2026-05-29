@@ -200,6 +200,11 @@
       margin-bottom: 16px;
     }
 
+    .job-load-tag {
+      font-size: 12px;
+      color: #8B95A1;
+    }
+
     /* Job actions */
     .job-actions {
       display: flex;
@@ -469,12 +474,15 @@ function buildJobCard(job) {
     actionsHTML = `<div class="counter-sent">Job in progress</div>`;
   }
 
+  const loadLabels = { small: '📦 Small load', medium: '🛒 Half bakkie', large: '🚛 Full bakkie' };
+  const loadTag    = job.load_size ? `<span class="job-load-tag">${loadLabels[job.load_size] || job.load_size}</span>` : '';
+
   card.innerHTML = `
     <div class="job-meta">
       <span class="job-area">${job.area}</span>
       <span class="job-offer">R${price}</span>
     </div>
-    <div class="job-time">${timeAgo(job.created_at)}</div>
+    <div class="job-time">${loadTag}${loadTag && timeAgo(job.created_at) ? ' &middot; ' : ''}${timeAgo(job.created_at)}</div>
     ${actionsHTML}
   `;
 
