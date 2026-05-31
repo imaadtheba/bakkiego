@@ -500,15 +500,23 @@ async function postJob() {
 
   try {
     const user = JSON.parse(localStorage.getItem('user'));
-    const { error } = await supabase.from('jobs').insert({
+    const jobData_insert = {
       trader_id:   user.id,
       area:        jobData.area,
       address:     address,
       load_size:   selectedLoadSize,
       offer_price: val,
       status:      'posted'
-    });
-    if (error) throw error;
+    };
+    console.log('Posting job:', JSON.stringify(jobData_insert));
+    const { data, error } = await supabase.from('jobs').insert(jobData_insert).select().single();
+    if (error) {
+      console.error('Post job full error:', JSON.stringify(error));
+      btn.disabled = false; btn.textContent = 'POST MY JOB';
+      alert('Failed to post job: ' + error.message + (error.details ? ' | ' + error.details : ''));
+      return;
+    }
+    console.log('Job posted:', data);
     window.location.href = 'trader-home.html';
   } catch (err) {
     console.error('Post job error:', err);
