@@ -159,6 +159,90 @@
       flex-direction: column;
       gap: 12px;
     }
+
+    /* ── Onboarding (dark theme, first-time only) ── */
+    #onboarding {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0D1117;
+      color: #F0F4F8;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      z-index: 100;
+    }
+
+    .ob-skip {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      color: #8B95A1;
+      font-size: 14px;
+      background: none;
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .ob-slide        { display: none; }
+    .ob-slide.active { display: block; }
+
+    .ob-icon  { font-size: 80px; line-height: 1; margin-bottom: 32px; }
+
+    .ob-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #F0F4F8;
+      margin-bottom: 16px;
+    }
+
+    .ob-desc {
+      font-size: 16px;
+      color: #8B95A1;
+      line-height: 1.6;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .ob-dots {
+      display: flex;
+      gap: 8px;
+      margin: 40px 0 32px;
+    }
+
+    .ob-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2A3340;
+      transition: width 0.3s ease, border-radius 0.3s ease, background 0.3s ease;
+    }
+
+    .ob-dot.active {
+      width: 24px;
+      border-radius: 4px;
+      background: #00C853;
+    }
+
+    .ob-btn {
+      width: 100%;
+      max-width: 440px;
+      padding: 18px;
+      background: #00C853;
+      color: #0D1117;
+      border: none;
+      border-radius: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .ob-btn:active { opacity: 0.84; transform: scale(0.98); }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -170,8 +254,37 @@
 </head>
 <body>
 
+  <!-- ── Onboarding (first-time only, dark theme) ── -->
+  <div id="onboarding">
+    <button class="ob-skip" onclick="skipOnboarding()">Skip</button>
+
+    <div class="ob-slide active" id="ob-slide-1">
+      <div class="ob-icon">🚛</div>
+      <h2 class="ob-title">Get a bakkie, fast</h2>
+      <p class="ob-desc">Post your load and get matched with a driver near Tshwane Fresh Produce Market</p>
+    </div>
+    <div class="ob-slide" id="ob-slide-2">
+      <div class="ob-icon">💬</div>
+      <h2 class="ob-title">Negotiate the price</h2>
+      <p class="ob-desc">Drivers accept or counter your offer. Agree on a price before the job starts</p>
+    </div>
+    <div class="ob-slide" id="ob-slide-3">
+      <div class="ob-icon">✅</div>
+      <h2 class="ob-title">Pay cash on delivery</h2>
+      <p class="ob-desc">No in-app payments. Pay the driver directly when your load arrives</p>
+    </div>
+
+    <div class="ob-dots">
+      <div class="ob-dot active" id="ob-dot-1"></div>
+      <div class="ob-dot" id="ob-dot-2"></div>
+      <div class="ob-dot" id="ob-dot-3"></div>
+    </div>
+
+    <button class="ob-btn" id="ob-btn" onclick="nextSlide()">Next</button>
+  </div>
+
   <!-- ── Screen 1: Phone lookup ── -->
-  <div class="screen" id="phone-screen">
+  <div class="screen" id="phone-screen" style="display:none">
     <div class="logo">
       <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
       <p class="subtitle">Enter your phone to continue</p>
@@ -226,6 +339,52 @@
   </div>
 
 <script>
+  /* ── Onboarding ── */
+  let currentSlide = 1;
+  const totalSlides = 3;
+
+  function nextSlide() {
+    if (currentSlide < totalSlides) {
+      document.getElementById(`ob-slide-${currentSlide}`).classList.remove('active');
+      document.getElementById(`ob-dot-${currentSlide}`).classList.remove('active');
+      currentSlide++;
+      document.getElementById(`ob-slide-${currentSlide}`).classList.add('active');
+      document.getElementById(`ob-dot-${currentSlide}`).classList.add('active');
+      if (currentSlide === totalSlides) {
+        document.getElementById('ob-btn').textContent = 'Get Started';
+      }
+    } else {
+      completeOnboarding();
+    }
+  }
+
+  function skipOnboarding() { completeOnboarding(); }
+
+  function completeOnboarding() {
+    localStorage.setItem('onboarding_complete', 'true');
+    document.getElementById('onboarding').style.display      = 'none';
+    document.getElementById('phone-screen').style.display    = 'flex';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FFFFFF');
+  }
+
+  // Swipe left → next slide
+  let _touchX = 0;
+  document.getElementById('onboarding').addEventListener('touchstart', e => {
+    _touchX = e.touches[0].clientX;
+  }, { passive: true });
+  document.getElementById('onboarding').addEventListener('touchend', e => {
+    if (_touchX - e.changedTouches[0].clientX > 50) nextSlide();
+  });
+
+  // Page init — show onboarding or go straight to login
+  if (localStorage.getItem('onboarding_complete')) {
+    document.getElementById('phone-screen').style.display = 'flex';
+  } else {
+    document.getElementById('onboarding').style.display   = 'flex';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0D1117');
+  }
+
+  /* ── Login ── */
   let signupRole  = null;
   let pendingPhone = null;
 
