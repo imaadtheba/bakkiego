@@ -175,10 +175,19 @@
 
   <button class="btn btn-orange" id="btn-pickup" onclick="pickup()" style="display:none">✅ I've Arrived — Pickup load</button>
   <button class="btn btn-green"  id="btn-done"   onclick="jobDone()" style="display:none">Job done — cash received ✓</button>
+
+  <div style="text-align:center;padding:24px 0 8px">
+    <button onclick="logout()" style="background:none;border:none;color:#8896A5;font-size:12px;font-family:inherit;cursor:pointer">Log out</button>
+  </div>
 </div>
 <script>
 const user = JSON.parse(localStorage.getItem('user') || 'null');
 if (!user) { window.location.replace('index.html'); }
+
+function logout() {
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
+}
 
 let job = null;
 

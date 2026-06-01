@@ -201,6 +201,9 @@
 <div class="page">
   <a href="trader-home.html" class="back-link">← Home</a>
   <div id="status-content"></div>
+  <div style="text-align:center;padding:24px 0 8px">
+    <button onclick="logout()" style="background:none;border:none;color:#8896A5;font-size:12px;font-family:inherit;cursor:pointer">Log out</button>
+  </div>
 </div>
 <script>
 const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -363,6 +366,11 @@ function setupRealtime() {
     .subscribe((status, err) => {
       console.log('job-status realtime:', status, err || '');
     });
+}
+
+function logout() {
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
 }
 
 async function init() {

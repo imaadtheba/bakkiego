@@ -32,8 +32,28 @@
     /* Greeting */
     .greeting {
       margin-bottom: 28px;
-      text-align: center;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
     }
+
+    .greeting-text { flex: 1; }
+
+    .btn-logout {
+      background: none;
+      border: 1px solid #E8EDF2;
+      color: #556070;
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 4px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-logout:active { opacity: 0.6; }
 
     .greeting-hey {
       font-size: 30px;
@@ -225,8 +245,11 @@
 <div class="page">
 
   <div class="greeting">
-    <div class="greeting-hey">Sawubona 👋</div>
-    <div class="greeting-name" id="greeting-name"></div>
+    <div class="greeting-text">
+      <div class="greeting-hey">Sawubona 👋</div>
+      <div class="greeting-name" id="greeting-name"></div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Log out</button>
   </div>
 
   <a href="job-post.html" class="cta-btn">I NEED A BAKKIE 🚛</a>
@@ -260,6 +283,11 @@
     if (!user) { window.location.replace('index.html'); }
 
     document.getElementById('greeting-name').textContent = user.name || user.phone || '';
+
+    function logout() {
+      localStorage.removeItem('user');
+      window.location.href = 'index.html';
+    }
 
     async function loadPage() {
       // Active job banner

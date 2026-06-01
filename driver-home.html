@@ -29,7 +29,30 @@
     }
 
     /* ── Greeting ── */
-    .greeting { margin-bottom: 4px; }
+    .greeting {
+      margin-bottom: 4px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .greeting-text { flex: 1; }
+
+    .btn-logout {
+      background: none;
+      border: 1px solid #E8EDF2;
+      color: #556070;
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 4px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-logout:active { opacity: 0.6; }
 
     .greeting-hey {
       font-size: 28px;
@@ -325,8 +348,11 @@
 
   <!-- Greeting -->
   <div class="greeting">
-    <div class="greeting-hey">Sawubona 👋</div>
-    <div class="greeting-name" id="driver-name"></div>
+    <div class="greeting-text">
+      <div class="greeting-hey">Sawubona 👋</div>
+      <div class="greeting-name" id="driver-name"></div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Log out</button>
   </div>
 
   <!-- Online / offline toggle -->
@@ -554,6 +580,11 @@ function timeAgo(ts) {
   const hrs = Math.floor(diffMs / 3600000);
   if (hrs < 24)  return `${hrs}h ago`;
   return `${Math.floor(diffMs / 86400000)}d ago`;
+}
+
+function logout() {
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
 }
 
 /* ── Init ── */
