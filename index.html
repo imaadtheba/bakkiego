@@ -17,19 +17,17 @@
       color: #1A1A2E;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
     }
 
-    /* ── Shared ── */
-    .screen {
-      width: 100%;
+    /* ── Shared container ── */
+    .wrap {
       max-width: 480px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      margin: 0 auto;
+    }
+
+    /* ── Login section ── */
+    .login-section {
+      padding: 48px 20px 24px;
     }
 
     .logo {
@@ -37,6 +35,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
+      margin-bottom: 8px;
     }
 
     .logo h1 {
@@ -49,10 +48,12 @@
     .bakkie { color: #00C853; }
     .go     { color: #FF6D00; }
 
-    .subtitle {
-      margin-top: 10px;
-      font-size: 16px;
+    .tagline {
+      font-size: 14px;
       color: #556070;
+      font-weight: 500;
+      margin: 8px 0 32px;
+      text-align: center;
     }
 
     .field-stack {
@@ -92,8 +93,78 @@
       transition: opacity 0.2s ease, transform 0.1s ease;
     }
 
-    .btn-primary:active { opacity: 0.82; transform: scale(0.97); }
+    .btn-primary:active   { opacity: 0.82; transform: scale(0.97); }
     .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── How it works ── */
+    .how-it-works {
+      padding: 24px 20px 48px;
+      border-top: 1px solid #E8EDF2;
+      margin-top: 8px;
+    }
+
+    .hiw-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8896A5;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    .step-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #E8EDF2;
+    }
+
+    .step-card:last-child { border-bottom: none; }
+
+    .step-icon {
+      font-size: 22px;
+      width: 44px;
+      height: 44px;
+      background: #F7F9FC;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid #E8EDF2;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1A1A2E;
+      margin-bottom: 2px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: #556070;
+      font-weight: 500;
+    }
+
+    /* ── Signup screen (new users only) ── */
+    #signup-screen {
+      display: none;
+      min-height: 100dvh;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .signup-wrap {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-top: 28px;
+    }
 
     .back-link {
       background: none;
@@ -109,11 +180,7 @@
     .back-link:active { opacity: 0.6; }
 
     /* ── Role cards ── */
-    .role-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .role-cards { display: flex; flex-direction: column; gap: 12px; }
 
     .role-card {
       background: #F7F9FC;
@@ -149,100 +216,13 @@
       transition: max-height 0.4s ease, opacity 0.3s ease;
     }
 
-    .signup-form.visible {
-      max-height: 560px;
-      opacity: 1;
-    }
+    .signup-form.visible { max-height: 560px; opacity: 1; }
 
     #vehicle-fields {
       display: none;
       flex-direction: column;
       gap: 12px;
     }
-
-    /* ── Onboarding (dark theme, first-time only) ── */
-    #onboarding {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: #0D1117;
-      color: #F0F4F8;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
-      text-align: center;
-      z-index: 100;
-    }
-
-    .ob-skip {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      color: #8B95A1;
-      font-size: 14px;
-      background: none;
-      border: none;
-      font-family: inherit;
-      cursor: pointer;
-    }
-
-    .ob-slide        { display: none; }
-    .ob-slide.active { display: block; }
-
-    .ob-icon  { font-size: 80px; line-height: 1; margin-bottom: 32px; }
-
-    .ob-title {
-      font-size: 26px;
-      font-weight: 700;
-      color: #F0F4F8;
-      margin-bottom: 16px;
-    }
-
-    .ob-desc {
-      font-size: 16px;
-      color: #8B95A1;
-      line-height: 1.6;
-      max-width: 300px;
-      margin: 0 auto;
-    }
-
-    .ob-dots {
-      display: flex;
-      gap: 8px;
-      margin: 40px 0 32px;
-    }
-
-    .ob-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #2A3340;
-      transition: width 0.3s ease, border-radius 0.3s ease, background 0.3s ease;
-    }
-
-    .ob-dot.active {
-      width: 24px;
-      border-radius: 4px;
-      background: #00C853;
-    }
-
-    .ob-btn {
-      width: 100%;
-      max-width: 440px;
-      padding: 18px;
-      background: #00C853;
-      color: #0D1117;
-      border: none;
-      border-radius: 18px;
-      font-size: 17px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-
-    .ob-btn:active { opacity: 0.84; transform: scale(0.98); }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -254,141 +234,102 @@
 </head>
 <body>
 
-  <!-- ── Onboarding (first-time only, dark theme) ── -->
-  <div id="onboarding">
-    <button class="ob-skip" onclick="skipOnboarding()">Skip</button>
+  <!-- ── Phone lookup + How it works ── -->
+  <div id="phone-screen">
+    <div class="wrap">
 
-    <div class="ob-slide active" id="ob-slide-1">
-      <div class="ob-icon">🚛</div>
-      <h2 class="ob-title">Get a bakkie, fast</h2>
-      <p class="ob-desc">Post your load and get matched with a driver near Tshwane Fresh Produce Market</p>
-    </div>
-    <div class="ob-slide" id="ob-slide-2">
-      <div class="ob-icon">💬</div>
-      <h2 class="ob-title">Negotiate the price</h2>
-      <p class="ob-desc">Drivers accept or counter your offer. Agree on a price before the job starts</p>
-    </div>
-    <div class="ob-slide" id="ob-slide-3">
-      <div class="ob-icon">✅</div>
-      <h2 class="ob-title">Pay cash on delivery</h2>
-      <p class="ob-desc">No in-app payments. Pay the driver directly when your load arrives</p>
-    </div>
+      <div class="login-section">
+        <div class="logo">
+          <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
+        </div>
+        <p class="tagline">On-demand bakkie logistics for Tshwane Market traders</p>
+        <div class="field-stack">
+          <input
+            type="tel"
+            id="phone"
+            class="text-input"
+            placeholder="Phone number"
+            inputmode="tel"
+            autocomplete="tel"
+          >
+          <button class="btn-primary" id="phone-btn" onclick="handleContinue()">Continue</button>
+        </div>
+      </div>
 
-    <div class="ob-dots">
-      <div class="ob-dot active" id="ob-dot-1"></div>
-      <div class="ob-dot" id="ob-dot-2"></div>
-      <div class="ob-dot" id="ob-dot-3"></div>
-    </div>
+      <div class="how-it-works">
+        <p class="hiw-label">How it works</p>
 
-    <button class="ob-btn" id="ob-btn" onclick="nextSlide()">Next</button>
+        <div class="step-card">
+          <div class="step-icon">🚛</div>
+          <div>
+            <p class="step-title">Post your load</p>
+            <p class="step-desc">Enter your destination and offer a price</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-icon">💬</div>
+          <div>
+            <p class="step-title">Negotiate the price</p>
+            <p class="step-desc">Driver accepts or counters your offer</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-icon">✅</div>
+          <div>
+            <p class="step-title">Pay cash on delivery</p>
+            <p class="step-desc">Pay the driver directly when your load arrives</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-  <!-- ── Screen 1: Phone lookup ── -->
-  <div class="screen" id="phone-screen" style="display:none">
-    <div class="logo">
-      <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
-      <p class="subtitle">Enter your phone to continue</p>
-    </div>
-    <div class="field-stack">
-      <input
-        type="tel"
-        id="phone"
-        class="text-input"
-        placeholder="Phone number"
-        inputmode="tel"
-        autocomplete="tel"
-      >
-      <button class="btn-primary" id="phone-btn" onclick="handleContinue()">Continue</button>
-    </div>
-  </div>
-
-  <!-- ── Screen 2: New user signup ── -->
-  <div class="screen" id="signup-screen" style="display:none">
-    <button class="back-link" onclick="showPhoneScreen()">← Back</button>
-    <div class="logo">
-      <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
-      <p class="subtitle">Create your account</p>
-    </div>
-    <div class="role-cards">
-      <div class="role-card" id="signup-card-trader" onclick="selectSignupRole('trader')">
-        <span class="card-emoji">🛒</span>
-        <div class="card-label">
-          <div class="card-title">I need a bakkie</div>
-          <div class="card-hint">Move goods, find a driver fast</div>
+  <!-- ── New user signup ── -->
+  <div id="signup-screen">
+    <div class="signup-wrap">
+      <button class="back-link" onclick="showPhoneScreen()">← Back</button>
+      <div class="logo">
+        <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
+        <p style="margin-top:8px;font-size:16px;color:#556070">Create your account</p>
+      </div>
+      <div class="role-cards">
+        <div class="role-card" id="signup-card-trader" onclick="selectSignupRole('trader')">
+          <span class="card-emoji">🛒</span>
+          <div class="card-label">
+            <div class="card-title">I need a bakkie</div>
+            <div class="card-hint">Move goods, find a driver fast</div>
+          </div>
+          <span class="card-arrow">›</span>
         </div>
-        <span class="card-arrow">›</span>
-      </div>
-      <div class="role-card" id="signup-card-driver" onclick="selectSignupRole('driver')">
-        <span class="card-emoji">🚛</span>
-        <div class="card-label">
-          <div class="card-title">I am a driver</div>
-          <div class="card-hint">Earn money with your bakkie</div>
+        <div class="role-card" id="signup-card-driver" onclick="selectSignupRole('driver')">
+          <span class="card-emoji">🚛</span>
+          <div class="card-label">
+            <div class="card-title">I am a driver</div>
+            <div class="card-hint">Earn money with your bakkie</div>
+          </div>
+          <span class="card-arrow">›</span>
         </div>
-        <span class="card-arrow">›</span>
       </div>
-    </div>
-    <div class="signup-form" id="signup-form">
-      <input type="text" id="name" class="text-input" placeholder="Your name" autocomplete="name" autocorrect="off">
-      <div id="vehicle-fields">
-        <input type="text" id="vehicle-model"  class="text-input" placeholder="Vehicle make & model (e.g. Toyota Hilux)" autocorrect="off">
-        <input type="text" id="vehicle-colour" class="text-input" placeholder="Vehicle colour (e.g. White)" autocorrect="off">
-        <input type="text" id="vehicle-plate"  class="text-input" placeholder="Number plate (e.g. GP ABC 123)" autocorrect="off" style="text-transform:uppercase">
+      <div class="signup-form" id="signup-form">
+        <input type="text" id="name" class="text-input" placeholder="Your name" autocomplete="name" autocorrect="off">
+        <div id="vehicle-fields">
+          <input type="text" id="vehicle-model"  class="text-input" placeholder="Vehicle make & model (e.g. Toyota Hilux)" autocorrect="off">
+          <input type="text" id="vehicle-colour" class="text-input" placeholder="Vehicle colour (e.g. White)" autocorrect="off">
+          <input type="text" id="vehicle-plate"  class="text-input" placeholder="Number plate (e.g. GP ABC 123)" autocorrect="off" style="text-transform:uppercase">
+        </div>
+        <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Sign Up →</button>
       </div>
-      <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Sign Up →</button>
     </div>
   </div>
 
 <script>
-  /* ── Onboarding ── */
-  let currentSlide = 1;
-  const totalSlides = 3;
-
-  function nextSlide() {
-    if (currentSlide < totalSlides) {
-      document.getElementById(`ob-slide-${currentSlide}`).classList.remove('active');
-      document.getElementById(`ob-dot-${currentSlide}`).classList.remove('active');
-      currentSlide++;
-      document.getElementById(`ob-slide-${currentSlide}`).classList.add('active');
-      document.getElementById(`ob-dot-${currentSlide}`).classList.add('active');
-      if (currentSlide === totalSlides) {
-        document.getElementById('ob-btn').textContent = 'Get Started';
-      }
-    } else {
-      completeOnboarding();
-    }
-  }
-
-  function skipOnboarding() { completeOnboarding(); }
-
-  function completeOnboarding() {
-    localStorage.setItem('onboarding_complete', 'true');
-    document.getElementById('onboarding').style.display      = 'none';
-    document.getElementById('phone-screen').style.display    = 'flex';
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#FFFFFF');
-  }
-
-  // Swipe left → next slide
-  let _touchX = 0;
-  document.getElementById('onboarding').addEventListener('touchstart', e => {
-    _touchX = e.touches[0].clientX;
-  }, { passive: true });
-  document.getElementById('onboarding').addEventListener('touchend', e => {
-    if (_touchX - e.changedTouches[0].clientX > 50) nextSlide();
-  });
-
-  // Page init — show onboarding or go straight to login
-  if (localStorage.getItem('onboarding_complete')) {
-    document.getElementById('phone-screen').style.display = 'flex';
-  } else {
-    document.getElementById('onboarding').style.display   = 'flex';
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0D1117');
-  }
-
-  /* ── Login ── */
-  let signupRole  = null;
+  let signupRole   = null;
   let pendingPhone = null;
 
-  /* ── Screen 1 ── */
+  /* ── Phone lookup ── */
   async function handleContinue() {
     const phoneEl = document.getElementById('phone');
     const phone   = phoneEl.value.trim();
@@ -406,14 +347,12 @@
         .from('users').select('*').eq('phone', phone).maybeSingle();
 
       if (user) {
-        // Returning user — go straight in
         localStorage.setItem('user', JSON.stringify(user));
         await redirectUser(user);
       } else {
-        // New user — show signup screen
         pendingPhone = phone;
-        document.getElementById('phone-screen').style.display  = 'none';
-        document.getElementById('signup-screen').style.display = 'flex';
+        document.getElementById('phone-screen').style.display   = 'none';
+        document.getElementById('signup-screen').style.display  = 'flex';
         btn.disabled = false; btn.textContent = 'Continue';
       }
     } catch (err) {
@@ -425,7 +364,7 @@
 
   function showPhoneScreen() {
     document.getElementById('signup-screen').style.display = 'none';
-    document.getElementById('phone-screen').style.display  = 'flex';
+    document.getElementById('phone-screen').style.display  = '';
     signupRole = null;
     document.getElementById('signup-card-trader').classList.remove('selected', 'dimmed');
     document.getElementById('signup-card-driver').classList.remove('selected', 'dimmed');
@@ -433,7 +372,7 @@
     document.getElementById('vehicle-fields').style.display = 'none';
   }
 
-  /* ── Screen 2 ── */
+  /* ── Signup ── */
   function selectSignupRole(chosen) {
     signupRole = chosen;
     const trader  = document.getElementById('signup-card-trader');
