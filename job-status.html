@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#FFFFFF">
   <title>BakkieGo — Job Status</title>
   <style>
     *, *::before, *::after {
@@ -12,8 +13,8 @@
     }
 
     body {
-      background: #0D1117;
-      color: #F0F4F8;
+      background: #FFFFFF;
+      color: #1A1A2E;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
       padding: 20px;
@@ -28,7 +29,7 @@
     }
 
     .back-link {
-      color: #8B95A1;
+      color: #8896A5;
       text-decoration: none;
       font-size: 15px;
       flex-shrink: 0;
@@ -59,14 +60,14 @@
 
     .view-sub {
       font-size: 15px;
-      color: #8B95A1;
+      color: #8896A5;
     }
 
     /* ── Summary card ── */
     .info-card {
       width: 100%;
-      background: #161B22;
-      border: 1.5px solid #2A3340;
+      background: #F7F9FC;
+      border: 1.5px solid #E8EDF2;
       border-radius: 16px;
       padding: 4px 20px;
       margin: 24px 0;
@@ -79,12 +80,12 @@
       align-items: center;
       gap: 16px;
       padding: 14px 0;
-      border-bottom: 1px solid #2A3340;
+      border-bottom: 1px solid #E8EDF2;
     }
 
     .info-row:last-child { border-bottom: none; }
 
-    .info-label { font-size: 14px; color: #8B95A1; }
+    .info-label { font-size: 14px; color: #8896A5; }
 
     .info-value { font-size: 14px; font-weight: 600; text-align: right; }
     .info-value.green  { color: #00C853; }
@@ -110,9 +111,9 @@
     .btn:first-of-type { margin-top: 0; }
     .btn:active { opacity: 0.84; transform: scale(0.98); }
 
-    .btn-green   { background: #00C853; color: #0D1117; }
-    .btn-outline { background: transparent; color: #F0F4F8; border: 1.5px solid #2A3340; }
-    .btn-muted   { background: transparent; color: #8B95A1; border: 1.5px solid #2A3340; font-size: 14px; padding: 14px; }
+    .btn-green   { background: #00C853; color: #FFFFFF; }
+    .btn-outline { background: transparent; color: #1A1A2E; border: 1.5px solid #E8EDF2; }
+    .btn-muted   { background: transparent; color: #8896A5; border: 1.5px solid #E8EDF2; font-size: 14px; padding: 14px; }
 
     .btn-stack { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
     .btn-stack .btn { margin-top: 0; }
@@ -164,7 +165,7 @@
 
     .counter-original {
       font-size: 14px;
-      color: #8B95A1;
+      color: #8896A5;
       margin-bottom: 8px;
     }
 

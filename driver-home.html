@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#FFFFFF">
   <title>BakkieGo — Driver</title>
   <style>
     *, *::before, *::after {
@@ -12,8 +13,8 @@
     }
 
     body {
-      background: #0D1117;
-      color: #F0F4F8;
+      background: #FFFFFF;
+      color: #1A1A2E;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
       padding: 48px 20px 48px;
@@ -37,7 +38,7 @@
 
     .greeting-name {
       font-size: 15px;
-      color: #8B95A1;
+      color: #8896A5;
       margin-top: 5px;
       min-height: 20px;
     }
@@ -47,8 +48,8 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      background: #161B22;
-      border: 2px solid #2A3340;
+      background: #F7F9FC;
+      border: 2px solid #E8EDF2;
       border-radius: 16px;
       padding: 18px 20px;
       cursor: pointer;
@@ -63,7 +64,7 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: #8B95A1;
+      background: #8896A5;
       flex-shrink: 0;
       transition: background 0.25s;
     }
@@ -77,7 +78,7 @@
     .toggle-status {
       font-size: 15px;
       font-weight: 700;
-      color: #8B95A1;
+      color: #8896A5;
       transition: color 0.25s;
     }
 
@@ -85,14 +86,14 @@
 
     .toggle-hint {
       font-size: 12px;
-      color: #8B95A1;
+      color: #8896A5;
       margin-top: 2px;
     }
 
     .toggle-switch {
       width: 46px;
       height: 26px;
-      background: #2A3340;
+      background: #E8EDF2;
       border-radius: 13px;
       position: relative;
       flex-shrink: 0;
@@ -106,7 +107,7 @@
       position: absolute;
       width: 20px;
       height: 20px;
-      background: #F0F4F8;
+      background: #FFFFFF;
       border-radius: 50%;
       top: 3px;
       left: 3px;
@@ -123,8 +124,8 @@
 
     .stat-card {
       flex: 1;
-      background: #161B22;
-      border: 1.5px solid #2A3340;
+      background: #F7F9FC;
+      border: 1.5px solid #E8EDF2;
       border-radius: 16px;
       padding: 16px;
     }
@@ -132,7 +133,7 @@
     .stat-label {
       font-size: 11px;
       font-weight: 700;
-      color: #8B95A1;
+      color: #8896A5;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin-bottom: 8px;
@@ -147,7 +148,7 @@
     .section-header {
       font-size: 11px;
       font-weight: 700;
-      color: #8B95A1;
+      color: #8896A5;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin-top: 6px;
@@ -161,15 +162,15 @@
     }
 
     .empty-state {
-      color: #8B95A1;
+      color: #8896A5;
       font-size: 14px;
       padding: 20px 0;
     }
 
     /* ── Job card ── */
     .job-card {
-      background: #161B22;
-      border: 1.5px solid #2A3340;
+      background: #F7F9FC;
+      border: 1.5px solid #E8EDF2;
       border-radius: 16px;
       padding: 18px;
     }
@@ -196,13 +197,13 @@
 
     .job-time {
       font-size: 12px;
-      color: #8B95A1;
+      color: #8896A5;
       margin-bottom: 16px;
     }
 
     .job-load-tag {
       font-size: 12px;
-      color: #8B95A1;
+      color: #8896A5;
     }
 
     /* Job actions */
@@ -214,7 +215,7 @@
     .btn-accept {
       flex: 1;
       background: #00C853;
-      color: #0D1117;
+      color: #FFFFFF;
       border: none;
       border-radius: 18px;
       padding: 13px;
@@ -230,8 +231,8 @@
     .btn-counter {
       flex: 1;
       background: transparent;
-      color: #F0F4F8;
-      border: 1.5px solid #2A3340;
+      color: #1A1A2E;
+      border: 1.5px solid #E8EDF2;
       border-radius: 18px;
       padding: 13px;
       font-size: 14px;
@@ -258,11 +259,11 @@
 
     .counter-input {
       flex: 1;
-      background: #0D1117;
-      border: 1.5px solid #2A3340;
+      background: #FFFFFF;
+      border: 1.5px solid #E8EDF2;
       border-radius: 16px;
       padding: 12px 14px;
-      color: #F0F4F8;
+      color: #1A1A2E;
       font-size: 16px;
       font-family: inherit;
       outline: none;
@@ -270,7 +271,7 @@
       min-width: 0;
     }
 
-    .counter-input::placeholder { color: #8B95A1; }
+    .counter-input::placeholder { color: #8896A5; }
     .counter-input:focus { border-color: #00C853; }
     .counter-input.error { border-color: #FF6D00; }
 
@@ -280,7 +281,7 @@
 
     .btn-submit {
       background: #FF6D00;
-      color: #0D1117;
+      color: #FFFFFF;
       border: none;
       border-radius: 18px;
       padding: 12px 20px;
@@ -304,7 +305,7 @@
     /* ── Offline message ── */
     .offline-msg {
       text-align: center;
-      color: #8B95A1;
+      color: #8896A5;
       font-size: 15px;
       padding: 40px 0 0;
     }
