@@ -271,6 +271,29 @@
 
     .btn-post:active { opacity: 0.84; transform: scale(0.98); }
   </style>
+  <style>
+    /* ── Google Places autocomplete dropdown ── */
+    .pac-container {
+      border-radius: 12px;
+      border: 1px solid #E8EDF2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin-top: 4px;
+      background: #FFFFFF;
+    }
+    .pac-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #1A1A2E;
+      cursor: pointer;
+      border-top: 1px solid #E8EDF2;
+    }
+    .pac-item:first-child { border-top: none; }
+    .pac-item:hover, .pac-item:focus { background: #F7F9FC; }
+    .pac-item-query { font-size: 14px; color: #1A1A2E; font-weight: 600; }
+    .pac-matched    { color: #00C853; font-weight: 700; }
+    .pac-icon       { display: none; }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.supabase = window.supabase.createClient(
@@ -278,6 +301,7 @@
       'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
     );
   </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk&libraries=places"></script>
 </head>
 <body>
 <div class="page">
@@ -507,7 +531,9 @@ async function postJob() {
       address:     address,
       load_size:   selectedLoadSize,
       offer_price: val,
-      status:      'posted'
+      status:      'posted',
+      lat:         selectedLat,
+      lng:         selectedLng
     };
     console.log('Posting job:', JSON.stringify(jobData_insert));
     const { data, error } = await supabase.from('jobs').insert(jobData_insert).select().single();
@@ -530,6 +556,32 @@ renderAreas('');
 document.getElementById('search-input').addEventListener('input', e => {
   renderAreas(e.target.value);
 });
+
+/* ── Google Places autocomplete ── */
+let selectedLat = null;
+let selectedLng = null;
+
+function initAutocomplete() {
+  const input = document.getElementById('address-input');
+  if (!input || !window.google?.maps?.places) return;
+
+  const ac = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: 'za' },
+    fields: ['formatted_address', 'geometry'],
+    types: ['address']
+  });
+
+  ac.addListener('place_changed', () => {
+    const place = ac.getPlace();
+    if (place.formatted_address) input.value = place.formatted_address;
+    if (place.geometry) {
+      selectedLat = place.geometry.location.lat();
+      selectedLng = place.geometry.location.lng();
+    }
+  });
+}
+
+window.addEventListener('load', initAutocomplete);
 </script>
 </body>
 </html>

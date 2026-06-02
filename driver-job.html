@@ -203,6 +203,13 @@ function render() {
   if (job.address) {
     document.getElementById('detail-address').textContent = job.address;
     document.getElementById('address-row').style.display  = '';
+  }
+
+  // Use precise coords if available, else fall back to address search
+  if (job.lat && job.lng) {
+    document.getElementById('btn-directions').href =
+      `https://www.google.com/maps/dir/?api=1&destination=${job.lat},${job.lng}`;
+  } else if (job.address) {
     document.getElementById('btn-directions').href =
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.address)}`;
   } else {
