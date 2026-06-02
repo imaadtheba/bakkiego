@@ -363,9 +363,15 @@ function selectLoadSize(size) {
 let selectedLat = null;
 let selectedLng = null;
 
+// Pre-declare all DOM refs so the event handler closes over stable references
+const hiddenAddress   = document.getElementById('address-input');
+const hiddenArea      = document.getElementById('area-input');
+const elPriceSuggest  = document.getElementById('price-suggestion');
+const elSuggestAmt    = document.getElementById('suggestion-amount');
+const elPriceInput    = document.getElementById('price-input');
+
 async function initAutocomplete() {
   try {
-    // Import library first, then access via google.maps.places namespace
     await google.maps.importLibrary('places');
     const { PlaceAutocompleteElement } = google.maps.places;
 
@@ -382,18 +388,17 @@ async function initAutocomplete() {
       fontFamily: 'system-ui, -apple-system, sans-serif'
     });
 
-    // Append to DOM BEFORE adding listener
     document.getElementById('address-container').appendChild(placeAC);
 
-    // Use event.place (not destructured) for reliability
     placeAC.addEventListener('gmp-placeselect', async (event) => {
-      console.log('gmp-placeselect fired:', event);
+      console.log('gmp-placeselect fired');
       const place = event.place;
       try {
         await place.fetchFields({ fields: ['formattedAddress', 'location', 'addressComponents'] });
-        console.log('Address:', place.formattedAddress);
 
-        document.getElementById('address-input').value = place.formattedAddress || '';
+        console.log('formattedAddress:', place.formattedAddress);
+        hiddenAddress.value = place.formattedAddress || '';
+        console.log('address-input after set:', hiddenAddress.value);
 
         if (place.location) {
           selectedLat = place.location.lat();
@@ -405,15 +410,15 @@ async function initAutocomplete() {
         console.log('Area match:', match);
 
         if (match) {
-          document.getElementById('area-input').value              = match.area;
-          document.getElementById('suggestion-amount').textContent = `R${match.price.toLocaleString()}`;
-          document.getElementById('price-suggestion').style.display = '';
-          document.getElementById('price-input').value             = match.price;
+          hiddenArea.value           = match.area;
+          elSuggestAmt.textContent   = `R${match.price.toLocaleString()}`;
+          elPriceSuggest.style.display = '';
+          elPriceInput.value         = match.price;
         } else {
-          document.getElementById('area-input').value              = 'Other';
-          document.getElementById('price-suggestion').style.display = 'none';
-          document.getElementById('price-input').value             = '';
-          document.getElementById('price-input').placeholder       = 'Enter your price';
+          hiddenArea.value             = 'Other';
+          elPriceSuggest.style.display = 'none';
+          elPriceInput.value           = '';
+          elPriceInput.placeholder     = 'Enter your price';
         }
       } catch (err) {
         console.error('fetchFields error:', err);
@@ -431,9 +436,7 @@ async function initAutocomplete() {
       borderRadius: '16px', padding: '18px 20px', fontSize: '17px',
       color: '#1A1A2E', outline: 'none', fontFamily: 'inherit'
     });
-    fb.addEventListener('input', () => {
-      document.getElementById('address-input').value = fb.value;
-    });
+    fb.addEventListener('input', () => { hiddenAddress.value = fb.value; });
     document.getElementById('address-container').appendChild(fb);
   }
 }
@@ -442,7 +445,12 @@ initAutocomplete().catch(console.error);
 
 /* ── Post job ── */
 async function postJob() {
-  const address = document.getElementById('address-input').value.trim();
+  console.log('postJob — address-input:', hiddenAddress.value);
+  console.log('postJob — area-input:', hiddenArea.value);
+  console.log('postJob — price-input:', elPriceInput.value);
+  console.log('postJob — loadSize:', selectedLoadSize);
+
+  const address = hiddenAddress.value.trim();
   if (!address) {
     const c = document.getElementById('address-container');
     c.classList.add('error');
@@ -471,7 +479,7 @@ async function postJob() {
 
   try {
     const user = JSON.parse(localStorage.getItem('user'));
-    const area = document.getElementById('area-input').value || 'Other';
+    const area = hiddenArea.value || 'Other';
 
     const jobRow = {
       trader_id:   user.id,
