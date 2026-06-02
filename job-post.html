@@ -62,20 +62,23 @@
       margin-top: 20px;
     }
 
-    /* ── Address container ── */
-    #address-container {
+    /* ── Address input ── */
+    .address-input {
       width: 100%;
-    }
-
-    #address-container gmp-place-autocomplete {
-      width: 100%;
-      display: block;
-    }
-
-    #address-container.error {
-      outline: 2px solid #FF6D00;
+      background: #F7F9FC;
+      border: 2px solid #E8EDF2;
       border-radius: 16px;
+      padding: 18px 20px;
+      color: #1A1A2E;
+      font-size: 17px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
     }
+
+    .address-input::placeholder { color: #8896A5; }
+    .address-input:focus         { border-color: #00C853; }
+    .address-input.error         { border-color: #FF6D00; }
 
     /* ── Price suggestion banner ── */
     .price-suggestion-banner {
@@ -229,9 +232,16 @@
 
   <!-- Address -->
   <label class="field-label" style="margin-top:0">Delivery Address</label>
-  <div id="address-container"></div>
-  <input type="hidden" id="address-input">
+  <input
+    type="text"
+    id="address-input"
+    class="address-input"
+    placeholder="Start typing your delivery address…"
+    autocomplete="off"
+  >
   <input type="hidden" id="area-input">
+  <input type="hidden" id="lat-input">
+  <input type="hidden" id="lng-input">
 
   <!-- Price suggestion (shown after address selected) -->
   <div id="price-suggestion" style="display:none" class="price-suggestion-banner">
@@ -342,11 +352,16 @@ function detectAreaAndPrice(formattedAddress, components) {
     ...(components || []).map(c => c.long_name)
   ].join(' ').toLowerCase();
 
+  console.log('Area search text:', search);
   for (const entry of AREA_PRICES) {
     for (const kw of entry.keywords) {
-      if (search.includes(kw)) return entry;
+      if (search.includes(kw)) {
+        console.log(`Matched "${kw}" → ${entry.area} R${entry.price}`);
+        return entry;
+      }
     }
   }
+  console.log('No area matched');
   return null;
 }
 
@@ -359,85 +374,55 @@ function selectLoadSize(size) {
   document.querySelector(`.load-option[data-size="${size}"]`).classList.add('selected');
 }
 
-/* ── Google Places autocomplete ── */
-let selectedLat = null;
-let selectedLng = null;
-
-// Pre-declare all DOM refs so the event handler closes over stable references
-const hiddenAddress   = document.getElementById('address-input');
-const hiddenArea      = document.getElementById('area-input');
-const elPriceSuggest  = document.getElementById('price-suggestion');
-const elSuggestAmt    = document.getElementById('suggestion-amount');
-const elPriceInput    = document.getElementById('price-input');
-
+/* ── Google Places autocomplete (classic, reliable) ── */
 async function initAutocomplete() {
   try {
-    await google.maps.importLibrary('places');
-    const { PlaceAutocompleteElement } = google.maps.places;
+    const { Autocomplete } = await google.maps.importLibrary('places');
 
-    const placeAC = new PlaceAutocompleteElement({
+    const input = document.getElementById('address-input');
+
+    const ac = new Autocomplete(input, {
       componentRestrictions: { country: 'za' },
+      fields: ['formatted_address', 'geometry', 'address_components'],
       types: ['address']
     });
 
-    Object.assign(placeAC.style, {
-      width: '100%', display: 'block',
-      borderRadius: '16px', border: '2px solid #E8EDF2',
-      fontSize: '17px', color: '#1A1A2E',
-      backgroundColor: '#F7F9FC',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    });
+    ac.addListener('place_changed', () => {
+      const place = ac.getPlace();
+      console.log('Place selected:', place.formatted_address);
+      console.log('Address components:', place.address_components);
 
-    document.getElementById('address-container').appendChild(placeAC);
+      if (!place.formatted_address) { console.warn('No address returned'); return; }
 
-    placeAC.addEventListener('gmp-placeselect', async (event) => {
-      console.log('gmp-placeselect fired');
-      const place = event.place;
-      try {
-        await place.fetchFields({ fields: ['formattedAddress', 'location', 'addressComponents'] });
+      // address-input already holds the value (it's the visible input)
+      if (place.geometry) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        document.getElementById('lat-input').value = lat;
+        document.getElementById('lng-input').value = lng;
+        console.log('Coords:', lat, lng);
+      }
 
-        console.log('formattedAddress:', place.formattedAddress);
-        hiddenAddress.value = place.formattedAddress || '';
-        console.log('address-input after set:', hiddenAddress.value);
+      const match = detectAreaAndPrice(place.formatted_address, place.address_components);
+      console.log('Area match:', match);
 
-        if (place.location) {
-          selectedLat = place.location.lat();
-          selectedLng = place.location.lng();
-          console.log('Coords:', selectedLat, selectedLng);
-        }
-
-        const match = detectAreaAndPrice(place.formattedAddress, place.addressComponents);
-        console.log('Area match:', match);
-
-        if (match) {
-          hiddenArea.value           = match.area;
-          elSuggestAmt.textContent   = `R${match.price.toLocaleString()}`;
-          elPriceSuggest.style.display = '';
-          elPriceInput.value         = match.price;
-        } else {
-          hiddenArea.value             = 'Other';
-          elPriceSuggest.style.display = 'none';
-          elPriceInput.value           = '';
-          elPriceInput.placeholder     = 'Enter your price';
-        }
-      } catch (err) {
-        console.error('fetchFields error:', err);
+      if (match) {
+        document.getElementById('area-input').value              = match.area;
+        document.getElementById('suggestion-amount').textContent = `R${match.price.toLocaleString()}`;
+        document.getElementById('price-suggestion').style.display = '';
+        document.getElementById('price-input').value             = match.price;
+      } else {
+        document.getElementById('area-input').value              = 'Other';
+        document.getElementById('price-suggestion').style.display = 'none';
+        document.getElementById('price-input').value             = '';
+        document.getElementById('price-input').placeholder       = 'Enter your price';
       }
     });
 
     console.log('Autocomplete ready');
   } catch (err) {
-    console.warn('Places init failed — using fallback:', err);
-    const fb = Object.assign(document.createElement('input'), {
-      type: 'text', placeholder: 'e.g. 123 Main Street, Centurion'
-    });
-    Object.assign(fb.style, {
-      width: '100%', background: '#F7F9FC', border: '2px solid #E8EDF2',
-      borderRadius: '16px', padding: '18px 20px', fontSize: '17px',
-      color: '#1A1A2E', outline: 'none', fontFamily: 'inherit'
-    });
-    fb.addEventListener('input', () => { hiddenAddress.value = fb.value; });
-    document.getElementById('address-container').appendChild(fb);
+    console.warn('Places init failed:', err);
+    // Fallback: address-input is already a visible text field — no extra work needed
   }
 }
 
@@ -445,16 +430,18 @@ initAutocomplete().catch(console.error);
 
 /* ── Post job ── */
 async function postJob() {
-  console.log('postJob — address-input:', hiddenAddress.value);
-  console.log('postJob — area-input:', hiddenArea.value);
-  console.log('postJob — price-input:', elPriceInput.value);
-  console.log('postJob — loadSize:', selectedLoadSize);
+  const address = document.getElementById('address-input').value.trim();
+  const area    = document.getElementById('area-input').value  || 'Other';
+  const latRaw  = document.getElementById('lat-input').value;
+  const lngRaw  = document.getElementById('lng-input').value;
 
-  const address = hiddenAddress.value.trim();
+  console.log('postJob:', { address, area, selectedLoadSize, lat: latRaw, lng: lngRaw });
+
   if (!address) {
-    const c = document.getElementById('address-container');
-    c.classList.add('error');
-    setTimeout(() => c.classList.remove('error'), 1200);
+    const el = document.getElementById('address-input');
+    el.classList.add('error');
+    el.focus();
+    setTimeout(() => el.classList.remove('error'), 1200);
     return;
   }
 
@@ -474,13 +461,13 @@ async function postJob() {
     return;
   }
 
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user?.id) { alert('Please log in again.'); window.location.href = 'index.html'; return; }
+
   const btn = document.getElementById('btn-post');
   btn.disabled = true; btn.textContent = 'Posting…';
 
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const area = hiddenArea.value || 'Other';
-
     const jobRow = {
       trader_id:   user.id,
       area,
@@ -488,8 +475,8 @@ async function postJob() {
       load_size:   selectedLoadSize,
       offer_price: val,
       status:      'posted',
-      lat:         selectedLat,
-      lng:         selectedLng
+      lat:         latRaw  ? parseFloat(latRaw)  : null,
+      lng:         lngRaw  ? parseFloat(lngRaw)  : null
     };
 
     console.log('Posting job:', JSON.stringify(jobRow));
