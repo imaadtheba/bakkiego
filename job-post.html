@@ -383,8 +383,7 @@ async function initAutocomplete() {
 
     const ac = new Autocomplete(input, {
       componentRestrictions: { country: 'za' },
-      fields: ['formatted_address', 'geometry', 'address_components'],
-      types: ['address']
+      fields: ['formatted_address', 'geometry', 'address_components']
     });
 
     ac.addListener('place_changed', () => {
