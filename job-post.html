@@ -365,7 +365,9 @@ let selectedLng = null;
 
 async function initAutocomplete() {
   try {
-    const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
+    // Import library first, then access via google.maps.places namespace
+    await google.maps.importLibrary('places');
+    const { PlaceAutocompleteElement } = google.maps.places;
 
     const placeAC = new PlaceAutocompleteElement({
       componentRestrictions: { country: 'za' },
@@ -380,35 +382,47 @@ async function initAutocomplete() {
       fontFamily: 'system-ui, -apple-system, sans-serif'
     });
 
+    // Append to DOM BEFORE adding listener
     document.getElementById('address-container').appendChild(placeAC);
 
-    placeAC.addEventListener('gmp-placeselect', async ({ place }) => {
-      await place.fetchFields({ fields: ['formattedAddress', 'location', 'addressComponents'] });
+    // Use event.place (not destructured) for reliability
+    placeAC.addEventListener('gmp-placeselect', async (event) => {
+      console.log('gmp-placeselect fired:', event);
+      const place = event.place;
+      try {
+        await place.fetchFields({ fields: ['formattedAddress', 'location', 'addressComponents'] });
+        console.log('Address:', place.formattedAddress);
 
-      document.getElementById('address-input').value = place.formattedAddress || '';
+        document.getElementById('address-input').value = place.formattedAddress || '';
 
-      if (place.location) {
-        selectedLat = place.location.lat();
-        selectedLng = place.location.lng();
-      }
+        if (place.location) {
+          selectedLat = place.location.lat();
+          selectedLng = place.location.lng();
+          console.log('Coords:', selectedLat, selectedLng);
+        }
 
-      const match = detectAreaAndPrice(place.formattedAddress, place.addressComponents);
+        const match = detectAreaAndPrice(place.formattedAddress, place.addressComponents);
+        console.log('Area match:', match);
 
-      if (match) {
-        document.getElementById('area-input').value         = match.area;
-        document.getElementById('suggestion-amount').textContent = `R${match.price.toLocaleString()}`;
-        document.getElementById('price-suggestion').style.display = '';
-        document.getElementById('price-input').value        = match.price;
-      } else {
-        document.getElementById('area-input').value              = '';
-        document.getElementById('price-suggestion').style.display = 'none';
-        document.getElementById('price-input').value             = '';
-        document.getElementById('price-input').placeholder       = 'Enter your price';
+        if (match) {
+          document.getElementById('area-input').value              = match.area;
+          document.getElementById('suggestion-amount').textContent = `R${match.price.toLocaleString()}`;
+          document.getElementById('price-suggestion').style.display = '';
+          document.getElementById('price-input').value             = match.price;
+        } else {
+          document.getElementById('area-input').value              = 'Other';
+          document.getElementById('price-suggestion').style.display = 'none';
+          document.getElementById('price-input').value             = '';
+          document.getElementById('price-input').placeholder       = 'Enter your price';
+        }
+      } catch (err) {
+        console.error('fetchFields error:', err);
       }
     });
+
+    console.log('Autocomplete ready');
   } catch (err) {
-    console.warn('Places autocomplete failed:', err);
-    // Fallback: plain text input
+    console.warn('Places init failed — using fallback:', err);
     const fb = Object.assign(document.createElement('input'), {
       type: 'text', placeholder: 'e.g. 123 Main Street, Centurion'
     });
@@ -424,7 +438,7 @@ async function initAutocomplete() {
   }
 }
 
-initAutocomplete();
+initAutocomplete().catch(console.error);
 
 /* ── Post job ── */
 async function postJob() {
