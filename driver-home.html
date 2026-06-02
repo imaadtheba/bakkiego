@@ -219,6 +219,16 @@
       color: #00C853;
     }
 
+    .job-address {
+      font-size: 13px;
+      color: #556070;
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .job-time {
       font-size: 12px;
       color: #556070;
@@ -511,6 +521,7 @@ function buildJobCard(job) {
       <span class="job-area">${job.area}</span>
       <span class="job-offer">R${price}</span>
     </div>
+    ${job.address ? `<div class="job-address">${job.address}</div>` : ''}
     <div class="job-time">${loadTag}${loadTag && timeAgo(job.created_at) ? ' &middot; ' : ''}${timeAgo(job.created_at)}</div>
     ${actionsHTML}
   `;
