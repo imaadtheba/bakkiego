@@ -272,27 +272,29 @@
     .btn-post:active { opacity: 0.84; transform: scale(0.98); }
   </style>
   <style>
-    /* ── Google Places autocomplete dropdown ── */
-    .pac-container {
-      border-radius: 12px;
-      border: 1px solid #E8EDF2;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      font-family: system-ui, -apple-system, sans-serif;
-      margin-top: 4px;
-      background: #FFFFFF;
+    /* ── PlaceAutocomplete container ── */
+    #address-container {
+      width: 100%;
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
-    .pac-item {
-      padding: 10px 14px;
-      font-size: 14px;
-      color: #1A1A2E;
-      cursor: pointer;
-      border-top: 1px solid #E8EDF2;
+
+    #address-container gmp-place-autocomplete {
+      width: 100%;
+      display: block;
+      --gmp-border-radius: 16px;
+      --gmp-border: 2px solid #E8EDF2;
+      --gmp-background-color: #F7F9FC;
+      --gmp-color: #1A1A2E;
+      --gmp-font-family: system-ui, -apple-system, sans-serif;
+      --gmp-font-size: 17px;
+      --gmp-padding: 18px 20px;
     }
-    .pac-item:first-child { border-top: none; }
-    .pac-item:hover, .pac-item:focus { background: #F7F9FC; }
-    .pac-item-query { font-size: 14px; color: #1A1A2E; font-weight: 600; }
-    .pac-matched    { color: #00C853; font-weight: 700; }
-    .pac-icon       { display: none; }
+
+    #address-container.error {
+      outline: 2px solid #FF6D00;
+      border-radius: 16px;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -301,7 +303,10 @@
       'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
     );
   </script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk&libraries=places"></script>
+  <script>
+    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
+    ({key: "AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk", v: "weekly"});
+  </script>
 </head>
 <body>
 <div class="page">
@@ -328,13 +333,8 @@
     <div class="s2-area" id="s2-area"></div>
 
     <label class="field-label" for="address-input">Delivery Address</label>
-    <input
-      type="text"
-      class="address-input"
-      id="address-input"
-      placeholder="e.g. 123 Main Street, Centurion"
-      autocomplete="street-address"
-    >
+    <div id="address-container"></div>
+    <input type="hidden" id="address-input">
 
     <label class="field-label">Load Size</label>
     <div class="load-size-options">
@@ -497,11 +497,12 @@ function renderAreas(query) {
 }
 
 async function postJob() {
-  const addrEl  = document.getElementById('address-input');
-  const address = addrEl.value.trim();
+  const address    = document.getElementById('address-input').value.trim();
+  const addrContainer = document.getElementById('address-container');
   if (!address) {
-    addrEl.classList.add('error'); addrEl.focus();
-    setTimeout(() => addrEl.classList.remove('error'), 1200); return;
+    addrContainer.classList.add('error');
+    setTimeout(() => addrContainer.classList.remove('error'), 1200);
+    return;
   }
 
   if (!selectedLoadSize) {
@@ -557,31 +558,61 @@ document.getElementById('search-input').addEventListener('input', e => {
   renderAreas(e.target.value);
 });
 
-/* ── Google Places autocomplete ── */
+/* ── Google Places autocomplete (new API) ── */
 let selectedLat = null;
 let selectedLng = null;
 
-function initAutocomplete() {
-  const input = document.getElementById('address-input');
-  if (!input || !window.google?.maps?.places) return;
+async function initAutocomplete() {
+  try {
+    const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
 
-  const ac = new google.maps.places.Autocomplete(input, {
-    componentRestrictions: { country: 'za' },
-    fields: ['formatted_address', 'geometry'],
-    types: ['address']
-  });
+    const placeAC = new PlaceAutocompleteElement({
+      componentRestrictions: { country: 'za' },
+      types: ['address']
+    });
 
-  ac.addListener('place_changed', () => {
-    const place = ac.getPlace();
-    if (place.formatted_address) input.value = place.formatted_address;
-    if (place.geometry) {
-      selectedLat = place.geometry.location.lat();
-      selectedLng = place.geometry.location.lng();
-    }
-  });
+    // Size to match other inputs
+    Object.assign(placeAC.style, {
+      width:           '100%',
+      display:         'block',
+      borderRadius:    '16px',
+      border:          '2px solid #E8EDF2',
+      fontSize:        '17px',
+      color:           '#1A1A2E',
+      backgroundColor: '#F7F9FC',
+      fontFamily:      'system-ui, -apple-system, sans-serif'
+    });
+
+    document.getElementById('address-container').appendChild(placeAC);
+
+    placeAC.addEventListener('gmp-placeselect', async ({ place }) => {
+      await place.fetchFields({ fields: ['formattedAddress', 'location'] });
+      document.getElementById('address-input').value = place.formattedAddress || '';
+      if (place.location) {
+        selectedLat = place.location.lat();
+        selectedLng = place.location.lng();
+      }
+    });
+  } catch (err) {
+    console.warn('Places autocomplete init failed:', err);
+    // Fallback: restore a plain text input so posting still works
+    const fallback = document.createElement('input');
+    fallback.type        = 'text';
+    fallback.id          = 'address-fallback';
+    fallback.placeholder = 'e.g. 123 Main Street, Centurion';
+    Object.assign(fallback.style, {
+      width: '100%', background: '#F7F9FC', border: '2px solid #E8EDF2',
+      borderRadius: '16px', padding: '18px 20px', fontSize: '17px',
+      color: '#1A1A2E', outline: 'none', fontFamily: 'inherit'
+    });
+    fallback.addEventListener('input', () => {
+      document.getElementById('address-input').value = fallback.value;
+    });
+    document.getElementById('address-container').appendChild(fallback);
+  }
 }
 
-window.addEventListener('load', initAutocomplete);
+initAutocomplete();
 </script>
 </body>
 </html>
