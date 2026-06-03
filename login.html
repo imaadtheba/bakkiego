@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#F5F0E8">
+  <title>BakkieGo</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #F5F0E8;
+      color: #1A1A2E;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+    }
+
+    /* ── Shared container ── */
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Login section ── */
+    .login-section {
+      padding: 48px 20px 24px;
+    }
+
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .logo h1 {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .bakkie { color: #00C853; }
+    .go     { color: #FF6D00; }
+
+    .tagline {
+      font-size: 14px;
+      color: #6B7280;
+      font-weight: 500;
+      margin: 8px 0 32px;
+      text-align: center;
+    }
+
+    .field-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .text-input {
+      width: 100%;
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      padding: 16px 18px;
+      color: #1A1A2E;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .text-input::placeholder { color: #8896A5; }
+    .text-input:focus         { border-color: #FF6D00; }
+    .text-input.error         { border-color: #FF6D00; }
+
+    .btn-primary {
+      width: 100%;
+      background: #FF6D00;
+      color: #1A1A2E;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn-primary:active   { opacity: 0.82; transform: scale(0.97); }
+    .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── How it works ── */
+    .how-it-works {
+      padding: 24px 20px 48px;
+      border-top: 1px solid #E8EDF2;
+      margin-top: 8px;
+    }
+
+    .hiw-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8896A5;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    .step-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid #E8EDF2;
+    }
+
+    .step-card:last-child { border-bottom: none; }
+
+    .step-icon {
+      font-size: 22px;
+      width: 44px;
+      height: 44px;
+      background: #1B4332;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1A1A2E;
+      margin-bottom: 2px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    /* ── Signup screen (new users only) ── */
+    #signup-screen {
+      display: none;
+      min-height: 100dvh;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .signup-wrap {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-top: 28px;
+    }
+
+    .back-link {
+      background: none;
+      border: none;
+      color: #6B7280;
+      font-size: 15px;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-align: left;
+    }
+
+    .back-link:active { opacity: 0.6; }
+
+    /* ── Role cards ── */
+    .role-cards { display: flex; flex-direction: column; gap: 12px; }
+
+    .role-card {
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s ease, opacity 0.2s ease, transform 0.1s ease;
+    }
+
+    .role-card:active { transform: scale(0.97); }
+    .role-card.selected { border-color: #FF6D00; }
+    .role-card.dimmed   { opacity: 0.45; }
+
+    .card-emoji { font-size: 34px; line-height: 1; flex-shrink: 0; }
+    .card-label { flex: 1; }
+    .card-title { font-size: 17px; font-weight: 600; }
+    .card-hint  { font-size: 13px; color: #6B7280; margin-top: 3px; }
+    .card-arrow { color: #6B7280; font-size: 20px; flex-shrink: 0; line-height: 1; }
+
+    /* ── Signup form — slides in ── */
+    .signup-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease;
+    }
+
+    .signup-form.visible { max-height: 560px; opacity: 1; }
+
+    #vehicle-fields {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+</head>
+<body>
+
+  <!-- ── Phone lookup + How it works ── -->
+  <div id="phone-screen">
+    <div class="wrap">
+
+      <div class="login-section">
+        <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;color:#6B7280;font-size:14px;text-decoration:none;margin-bottom:24px;font-family:inherit">← Back</a>
+        <div class="logo">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <div style="width:40px;height:40px;background:#FF6D00;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🚛</div>
+            <span style="font-size:24px;font-weight:800;color:#1A1A2E">BakkieGo</span>
+          </div>
+        </div>
+        <p class="tagline">On-demand bakkie logistics for Tshwane Market traders</p>
+        <div class="field-stack">
+          <input
+            type="tel"
+            id="phone"
+            class="text-input"
+            placeholder="Phone number"
+            inputmode="tel"
+            autocomplete="tel"
+          >
+          <button class="btn-primary" id="phone-btn" onclick="handleContinue()">Continue</button>
+        </div>
+      </div>
+
+      <div class="how-it-works">
+        <p class="hiw-label">How it works</p>
+
+        <div class="step-card">
+          <div class="step-icon">🚛</div>
+          <div>
+            <p class="step-title">Post your load</p>
+            <p class="step-desc">Enter your destination and offer a price</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-icon">💬</div>
+          <div>
+            <p class="step-title">Negotiate the price</p>
+            <p class="step-desc">Driver accepts or counters your offer</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-icon">✅</div>
+          <div>
+            <p class="step-title">Pay cash on delivery</p>
+            <p class="step-desc">Pay the driver directly when your load arrives</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── New user signup ── -->
+  <div id="signup-screen">
+    <div class="signup-wrap">
+      <button class="back-link" onclick="showPhoneScreen()">← Back</button>
+      <div class="logo">
+        <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
+        <p style="margin-top:8px;font-size:16px;color:#6B7280">Create your account</p>
+      </div>
+      <div class="role-cards">
+        <div class="role-card" id="signup-card-trader" onclick="selectSignupRole('trader')">
+          <span class="card-emoji">🛒</span>
+          <div class="card-label">
+            <div class="card-title">I need a bakkie</div>
+            <div class="card-hint">Move goods, find a driver fast</div>
+          </div>
+          <span class="card-arrow">›</span>
+        </div>
+        <div class="role-card" id="signup-card-driver" onclick="selectSignupRole('driver')">
+          <span class="card-emoji">🚛</span>
+          <div class="card-label">
+            <div class="card-title">I am a driver</div>
+            <div class="card-hint">Earn money with your bakkie</div>
+          </div>
+          <span class="card-arrow">›</span>
+        </div>
+      </div>
+      <div class="signup-form" id="signup-form">
+        <input type="text" id="name" class="text-input" placeholder="Your name" autocomplete="name" autocorrect="off">
+        <div id="vehicle-fields">
+          <input type="text" id="vehicle-model"  class="text-input" placeholder="Vehicle make & model (e.g. Toyota Hilux)" autocorrect="off">
+          <input type="text" id="vehicle-colour" class="text-input" placeholder="Vehicle colour (e.g. White)" autocorrect="off">
+          <input type="text" id="vehicle-plate"  class="text-input" placeholder="Number plate (e.g. GP ABC 123)" autocorrect="off" style="text-transform:uppercase">
+        </div>
+        <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Sign Up →</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Returning user — skip login entirely
+  (function() {
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        window.location.replace(u.role === 'driver' ? 'driver-home.html' : 'trader-home.html');
+      }
+    } catch (_) {}
+  })();
+
+  let signupRole   = null;
+  let pendingPhone = null;
+
+  /* ── Phone lookup ── */
+  async function handleContinue() {
+    const phoneEl = document.getElementById('phone');
+    const phone   = phoneEl.value.trim();
+
+    if (!phone) {
+      phoneEl.classList.add('error'); phoneEl.focus();
+      setTimeout(() => phoneEl.classList.remove('error'), 1200); return;
+    }
+
+    const btn = document.getElementById('phone-btn');
+    btn.disabled = true; btn.textContent = 'Checking…';
+
+    try {
+      const { data: user } = await supabase
+        .from('users').select('*').eq('phone', phone).maybeSingle();
+
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+        await redirectUser(user);
+      } else {
+        pendingPhone = phone;
+        document.getElementById('phone-screen').style.display   = 'none';
+        document.getElementById('signup-screen').style.display  = 'flex';
+        btn.disabled = false; btn.textContent = 'Continue';
+      }
+    } catch (err) {
+      console.error('Phone check error:', err);
+      btn.disabled = false; btn.textContent = 'Continue';
+      alert('Something went wrong. Please try again.');
+    }
+  }
+
+  function showPhoneScreen() {
+    document.getElementById('signup-screen').style.display = 'none';
+    document.getElementById('phone-screen').style.display  = '';
+    signupRole = null;
+    document.getElementById('signup-card-trader').classList.remove('selected', 'dimmed');
+    document.getElementById('signup-card-driver').classList.remove('selected', 'dimmed');
+    document.getElementById('signup-form').classList.remove('visible');
+    document.getElementById('vehicle-fields').style.display = 'none';
+  }
+
+  /* ── Signup ── */
+  function selectSignupRole(chosen) {
+    signupRole = chosen;
+    const trader  = document.getElementById('signup-card-trader');
+    const driver  = document.getElementById('signup-card-driver');
+    const form    = document.getElementById('signup-form');
+    const vFields = document.getElementById('vehicle-fields');
+
+    trader.classList.remove('selected', 'dimmed');
+    driver.classList.remove('selected', 'dimmed');
+
+    if (chosen === 'trader') {
+      trader.classList.add('selected');
+      driver.classList.add('dimmed');
+      vFields.style.display = 'none';
+    } else {
+      driver.classList.add('selected');
+      trader.classList.add('dimmed');
+      vFields.style.display = 'flex';
+    }
+
+    form.classList.add('visible');
+    setTimeout(() => document.getElementById('name').focus(), 200);
+  }
+
+  async function handleSignup() {
+    const nameEl = document.getElementById('name');
+    const name   = nameEl.value.trim();
+
+    if (!name) {
+      nameEl.classList.add('error'); nameEl.focus();
+      setTimeout(() => nameEl.classList.remove('error'), 1200); return;
+    }
+    if (!signupRole) { alert('Please select your role.'); return; }
+
+    let vehicleData = {};
+    if (signupRole === 'driver') {
+      const model  = document.getElementById('vehicle-model').value.trim();
+      const colour = document.getElementById('vehicle-colour').value.trim();
+      const plate  = document.getElementById('vehicle-plate').value.trim().toUpperCase();
+      if (!model || !colour || !plate) {
+        alert('Please fill in your vehicle details.'); return;
+      }
+      vehicleData = { vehicle_model: model, vehicle_colour: colour, vehicle_plate: plate };
+    }
+
+    const btn = document.getElementById('signup-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+
+    try {
+      const { data: user, error } = await supabase
+        .from('users')
+        .insert({ phone: pendingPhone, name, role: signupRole, ...vehicleData })
+        .select().single();
+
+      if (error) throw error;
+
+      localStorage.setItem('user', JSON.stringify(user));
+      await redirectUser(user);
+    } catch (err) {
+      console.error('Signup error:', err);
+      btn.disabled = false; btn.textContent = 'Sign Up →';
+      alert('Failed to create account: ' + (err.message || err));
+    }
+  }
+
+  /* ── Shared ── */
+  async function redirectUser(user) {
+    if (user.role === 'driver') {
+      window.location.href = 'driver-home.html'; return;
+    }
+    const { data: activeJob } = await supabase
+      .from('jobs').select('id').eq('trader_id', user.id)
+      .neq('status', 'completed').neq('status', 'cancelled')
+      .limit(1).maybeSingle();
+    window.location.href = activeJob ? 'job-status.html' : 'trader-home.html';
+  }
+
+  document.getElementById('phone').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleContinue();
+  });
+</script>
+
+</body>
+</html>

@@ -280,13 +280,13 @@
 </div>
   <script>
     const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) { window.location.replace('index.html'); }
+    if (!user) { window.location.replace('login.html'); }
 
     document.getElementById('greeting-name').textContent = user.name || user.phone || '';
 
     function logout() {
       localStorage.removeItem('user');
-      window.location.href = 'index.html';
+      window.location.href = 'login.html';
     }
 
     async function loadPage() {

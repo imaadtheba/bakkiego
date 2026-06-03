@@ -207,7 +207,7 @@
 </div>
 <script>
 const user = JSON.parse(localStorage.getItem('user') || 'null');
-if (!user) { window.location.replace('index.html'); }
+if (!user) { window.location.replace('login.html'); }
 
 let job = null;
 
@@ -370,7 +370,7 @@ function setupRealtime() {
 
 function logout() {
   localStorage.removeItem('user');
-  window.location.href = 'index.html';
+  window.location.href = 'login.html';
 }
 
 async function init() {

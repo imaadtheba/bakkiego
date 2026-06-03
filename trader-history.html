@@ -112,7 +112,7 @@
 </div>
 <script>
 const user = JSON.parse(localStorage.getItem('user') || 'null');
-if (!user) { window.location.replace('index.html'); }
+if (!user) { window.location.replace('login.html'); }
 
 async function loadHistory() {
   const listEl = document.getElementById('trip-list');
