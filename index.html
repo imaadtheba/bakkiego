@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#F5F0E8">
   <title>BakkieGo</title>
   <style>
     *, *::before, *::after {
@@ -13,7 +13,7 @@
     }
 
     body {
-      background: #FFFFFF;
+      background: #F5F0E8;
       color: #1A1A2E;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
@@ -50,7 +50,7 @@
 
     .tagline {
       font-size: 14px;
-      color: #556070;
+      color: #6B7280;
       font-weight: 500;
       margin: 8px 0 32px;
       text-align: center;
@@ -64,7 +64,7 @@
 
     .text-input {
       width: 100%;
-      background: #F7F9FC;
+      background: #FFFFFF;
       border: 2px solid #E8EDF2;
       border-radius: 16px;
       padding: 16px 18px;
@@ -76,13 +76,13 @@
     }
 
     .text-input::placeholder { color: #8896A5; }
-    .text-input:focus         { border-color: #00C853; }
+    .text-input:focus         { border-color: #FF6D00; }
     .text-input.error         { border-color: #FF6D00; }
 
     .btn-primary {
       width: 100%;
-      background: #00C853;
-      color: #FFFFFF;
+      background: #FF6D00;
+      color: #1A1A2E;
       border: none;
       border-radius: 18px;
       padding: 18px;
@@ -126,13 +126,13 @@
       font-size: 22px;
       width: 44px;
       height: 44px;
-      background: #F7F9FC;
-      border-radius: 12px;
+      background: #1B4332;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      border: 1px solid #E8EDF2;
+      color: white;
     }
 
     .step-title {
@@ -144,7 +144,7 @@
 
     .step-desc {
       font-size: 13px;
-      color: #556070;
+      color: #6B7280;
       font-weight: 500;
     }
 
@@ -169,7 +169,7 @@
     .back-link {
       background: none;
       border: none;
-      color: #556070;
+      color: #6B7280;
       font-size: 15px;
       font-family: inherit;
       cursor: pointer;
@@ -183,7 +183,7 @@
     .role-cards { display: flex; flex-direction: column; gap: 12px; }
 
     .role-card {
-      background: #F7F9FC;
+      background: #FFFFFF;
       border: 2px solid #E8EDF2;
       border-radius: 16px;
       padding: 20px;
@@ -196,14 +196,14 @@
     }
 
     .role-card:active { transform: scale(0.97); }
-    .role-card.selected { border-color: #00C853; }
+    .role-card.selected { border-color: #FF6D00; }
     .role-card.dimmed   { opacity: 0.45; }
 
     .card-emoji { font-size: 34px; line-height: 1; flex-shrink: 0; }
     .card-label { flex: 1; }
     .card-title { font-size: 17px; font-weight: 600; }
-    .card-hint  { font-size: 13px; color: #556070; margin-top: 3px; }
-    .card-arrow { color: #556070; font-size: 20px; flex-shrink: 0; line-height: 1; }
+    .card-hint  { font-size: 13px; color: #6B7280; margin-top: 3px; }
+    .card-arrow { color: #6B7280; font-size: 20px; flex-shrink: 0; line-height: 1; }
 
     /* ── Signup form — slides in ── */
     .signup-form {
@@ -240,7 +240,10 @@
 
       <div class="login-section">
         <div class="logo">
-          <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <div style="width:40px;height:40px;background:#FF6D00;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🚛</div>
+            <span style="font-size:24px;font-weight:800;color:#1A1A2E">BakkieGo</span>
+          </div>
         </div>
         <p class="tagline">On-demand bakkie logistics for Tshwane Market traders</p>
         <div class="field-stack">
@@ -293,7 +296,7 @@
       <button class="back-link" onclick="showPhoneScreen()">← Back</button>
       <div class="logo">
         <h1><span class="bakkie">Bakkie</span><span class="go">Go</span></h1>
-        <p style="margin-top:8px;font-size:16px;color:#556070">Create your account</p>
+        <p style="margin-top:8px;font-size:16px;color:#6B7280">Create your account</p>
       </div>
       <div class="role-cards">
         <div class="role-card" id="signup-card-trader" onclick="selectSignupRole('trader')">

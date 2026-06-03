@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#F5F0E8">
   <title>BakkieGo — Post a Job</title>
   <style>
     *, *::before, *::after {
@@ -13,7 +13,7 @@
     }
 
     body {
-      background: #FFFFFF;
+      background: #F5F0E8;
       color: #1A1A2E;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100dvh;
@@ -32,7 +32,7 @@
     .back-btn {
       background: none;
       border: none;
-      color: #556070;
+      color: #6B7280;
       font-size: 15px;
       font-family: inherit;
       cursor: pointer;
@@ -55,7 +55,7 @@
       display: block;
       font-size: 12px;
       font-weight: 700;
-      color: #3D4D5C;
+      color: #6B7280;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       margin-bottom: 8px;
@@ -65,7 +65,7 @@
     /* ── Address input ── */
     .address-input {
       width: 100%;
-      background: #F7F9FC;
+      background: #FFFFFF;
       border: 2px solid #E8EDF2;
       border-radius: 16px;
       padding: 18px 20px;
@@ -77,13 +77,13 @@
     }
 
     .address-input::placeholder { color: #8896A5; }
-    .address-input:focus         { border-color: #00C853; }
+    .address-input:focus         { border-color: #FF6D00; }
     .address-input.error         { border-color: #FF6D00; }
 
     /* ── Price suggestion banner ── */
     .price-suggestion-banner {
       background: #F0FFF4;
-      border: 1px solid #00C853;
+      border: 1px solid #FF6D00;
       border-radius: 12px;
       padding: 14px 16px;
       margin-top: 12px;
@@ -92,7 +92,7 @@
 
     .suggestion-label {
       font-size: 12px;
-      color: #556070;
+      color: #6B7280;
       font-weight: 500;
       margin-bottom: 4px;
     }
@@ -117,7 +117,7 @@
     }
 
     .load-option {
-      background: #F7F9FC;
+      background: #FFFFFF;
       border: 2px solid #E8EDF2;
       border-radius: 16px;
       padding: 14px 8px;
@@ -133,25 +133,25 @@
     .load-option:active { opacity: 0.7; }
 
     .load-option.selected {
-      border-color: #00C853;
-      background: rgba(0, 200, 83, 0.08);
+      border-color: #FF6D00;
+      background: rgba(255, 109, 0, 0.08);
     }
 
     .load-icon  { font-size: 26px; line-height: 1; }
     .load-label { color: #1A1A2E; font-weight: 700; font-size: 14px; }
-    .load-desc  { color: #556070; font-size: 11px; }
+    .load-desc  { color: #6B7280; font-size: 11px; }
 
     /* ── Price input ── */
     .price-wrapper {
       display: flex;
       align-items: center;
-      background: #F7F9FC;
+      background: #FFFFFF;
       border: 2px solid #E8EDF2;
       border-radius: 16px;
       transition: border-color 0.2s;
     }
 
-    .price-wrapper:focus-within { border-color: #00C853; }
+    .price-wrapper:focus-within { border-color: #FF6D00; }
     .price-wrapper.error         { border-color: #FF6D00; }
 
     .price-prefix {
@@ -188,7 +188,7 @@
 
     .price-note {
       font-size: 13px;
-      color: #556070;
+      color: #6B7280;
       margin-top: 8px;
     }
 
@@ -196,8 +196,8 @@
     .btn-post {
       display: block;
       width: 100%;
-      background: #00C853;
-      color: #FFFFFF;
+      background: #FF6D00;
+      color: #1A1A2E;
       border: none;
       border-radius: 18px;
       padding: 22px;
