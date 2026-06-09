@@ -62,6 +62,81 @@
       margin-top: 20px;
     }
 
+    /* ── Route card ── */
+    .route-card {
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .route-card:has(.address-input.error) { border-color: #FF6D00; }
+
+    .route-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 16px 20px;
+    }
+
+    .route-row + .route-row { border-top: 1px solid #F0F4F8; }
+
+    .route-dot-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 16px;
+      margin-right: 14px;
+      flex-shrink: 0;
+      padding-top: 3px;
+    }
+
+    .route-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .route-dot--pickup  { background: #1B4332; }
+    .route-dot--dropoff { background: #FF6D00; }
+
+    .route-connector-line {
+      flex: 1;
+      width: 2px;
+      min-height: 28px;
+      background: #D1D9E0;
+      margin-top: 5px;
+    }
+
+    .route-row-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .route-row-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8896A5;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .route-row-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1A1A2E;
+    }
+
+    .route-hint {
+      font-size: 12px;
+      color: #8896A5;
+      margin-top: 8px;
+      text-align: center;
+    }
+
     /* ── Address input ── */
     .address-input {
       width: 100%;
@@ -79,6 +154,18 @@
     .address-input::placeholder { color: #8896A5; }
     .address-input:focus         { border-color: #FF6D00; }
     .address-input.error         { border-color: #FF6D00; }
+
+    /* inside route card the input is borderless — card provides the container */
+    .route-card .address-input {
+      border: none;
+      border-radius: 0;
+      padding: 2px 0 0;
+      background: transparent;
+      font-size: 16px;
+    }
+
+    .route-card .address-input:focus { border-color: transparent; }
+    .route-card .address-input.error { border-color: transparent; }
 
     /* ── Price suggestion banner ── */
     .price-suggestion-banner {
@@ -230,15 +317,37 @@
   <button class="back-btn" onclick="history.back()">← Back</button>
   <div class="page-title">Post a job</div>
 
-  <!-- Address -->
-  <label class="field-label" style="margin-top:0">Delivery Address</label>
-  <input
-    type="text"
-    id="address-input"
-    class="address-input"
-    placeholder="Start typing your delivery address…"
-    autocomplete="off"
-  >
+  <!-- Route card -->
+  <div class="route-card" style="margin-top:0">
+    <!-- Pickup row — display-only, not submitted -->
+    <div class="route-row">
+      <div class="route-dot-col">
+        <div class="route-dot route-dot--pickup"></div>
+        <div class="route-connector-line"></div>
+      </div>
+      <div class="route-row-body">
+        <span class="route-row-label">Pickup</span>
+        <span class="route-row-value">Tshwane Fresh Produce Market</span>
+      </div>
+    </div>
+    <!-- Drop-off row — existing Places-bound input, unchanged -->
+    <div class="route-row">
+      <div class="route-dot-col">
+        <div class="route-dot route-dot--dropoff"></div>
+      </div>
+      <div class="route-row-body">
+        <span class="route-row-label">Drop-off</span>
+        <input
+          type="text"
+          id="address-input"
+          class="address-input"
+          placeholder="Start typing your delivery address…"
+          autocomplete="off"
+        >
+      </div>
+    </div>
+  </div>
+  <p class="route-hint">More pickup areas coming soon</p>
   <input type="hidden" id="area-input">
   <input type="hidden" id="lat-input">
   <input type="hidden" id="lng-input">
