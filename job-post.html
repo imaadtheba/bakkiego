@@ -579,18 +579,18 @@ async function postJob() {
   const val      = parseInt(document.getElementById('price-input').value, 10);
   const wrapper  = document.getElementById('price-wrapper');
   const priceErr = document.getElementById('price-error');
-  const minPrice = suggestedPrice || 50;
-  if (!val || val < minPrice) {
+  const minPrice = suggestedPrice ? Math.round(suggestedPrice * 0.3) : null;
+  if (!val) {
     wrapper.classList.add('error');
     document.getElementById('price-input').focus();
-    if (val && val < minPrice) {
-      priceErr.textContent = suggestedPrice
-        ? `Offer too low — suggested price for this area is R${suggestedPrice.toLocaleString()}`
-        : 'Offer too low — minimum offer is R50';
-      priceErr.style.display = '';
-    } else {
-      setTimeout(() => wrapper.classList.remove('error'), 1200);
-    }
+    setTimeout(() => wrapper.classList.remove('error'), 1200);
+    return;
+  }
+  if (minPrice !== null && val < minPrice) {
+    wrapper.classList.add('error');
+    document.getElementById('price-input').focus();
+    priceErr.textContent = `Offer too low — minimum offer for this area is R${minPrice.toLocaleString()}`;
+    priceErr.style.display = '';
     return;
   }
 
