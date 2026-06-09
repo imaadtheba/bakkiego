@@ -169,6 +169,21 @@
       margin-bottom: 8px;
     }
 
+    /* ── Driver card ── */
+    .driver-card-wrap {
+      width: 100%;
+      text-align: left;
+    }
+
+    .driver-card-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 20px 0 8px;
+    }
+
     /* ── Accepted state ── */
     .big-emoji {
       font-size: 60px;
@@ -275,20 +290,32 @@ function viewNegotiating() {
     </div>`;
 }
 
+function driverCard() {
+  if (!job.driver) return '';
+  const d = job.driver;
+  return `
+    <div class="driver-card-wrap">
+      <div class="driver-card-label">Your Driver</div>
+      <div class="info-card" style="margin-top:0">
+        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${d.name || '—'}</span></div>
+        ${d.vehicle_model  ? `<div class="info-row"><span class="info-label">Vehicle</span><span class="info-value">${d.vehicle_model}</span></div>`  : ''}
+        ${d.vehicle_colour ? `<div class="info-row"><span class="info-label">Colour</span><span class="info-value">${d.vehicle_colour}</span></div>` : ''}
+        ${d.vehicle_plate  ? `<div class="info-row"><span class="info-label">Plate</span><span class="info-value">${d.vehicle_plate}</span></div>`   : ''}
+      </div>
+    </div>`;
+}
+
 function viewDriverStatus(emoji, title, subtitle) {
   const price       = job.counter_price || job.offer_price;
   const driverName  = job.driver?.name  || 'Your driver';
   const driverPhone = job.driver?.phone || '';
   const waPhone     = driverPhone.startsWith('0') ? '27' + driverPhone.slice(1) : driverPhone.replace(/\D/g,'');
-  const vehicle     = [job.driver?.vehicle_colour, job.driver?.vehicle_model, job.driver?.vehicle_plate]
-                        .filter(Boolean).join(' · ');
   return `
     <div class="view-center">
       <div class="big-emoji">${emoji}</div>
       <div class="view-title">${title}</div>
       <div class="view-sub">${subtitle}</div>
       <div class="driver-name">${driverName}</div>
-      ${vehicle ? `<div class="view-sub" style="margin-top:4px;font-size:13px">${vehicle}</div>` : ''}
       <div class="agreed-price">R${price}</div>
       <div class="info-card">
         <div class="info-row"><span class="info-label">Area</span><span class="info-value">${job.area}</span></div>
@@ -296,6 +323,7 @@ function viewDriverStatus(emoji, title, subtitle) {
         <div class="info-row"><span class="info-label">Agreed price</span><span class="info-value green">R${price}</span></div>
         <div class="info-row"><span class="info-label">Payment</span><span class="info-value">Cash to driver</span></div>
       </div>
+      ${driverCard()}
       <a href="${waPhone ? `https://wa.me/${waPhone}` : '#'}" class="btn btn-green" style="width:100%">WhatsApp ${driverName}</a>
     </div>`;
 }
