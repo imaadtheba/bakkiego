@@ -279,6 +279,13 @@
       margin-top: 8px;
     }
 
+    .price-error {
+      font-size: 13px;
+      color: #D32F2F;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
     /* ── Post button ── */
     .btn-post {
       display: block;
@@ -393,6 +400,7 @@
     >
   </div>
   <p class="price-note">Drivers can accept or counter your offer</p>
+  <p class="price-error" id="price-error" style="display:none"></p>
 
   <button class="btn-post" id="btn-post" onclick="postJob()">POST MY JOB</button>
 
@@ -476,6 +484,7 @@ function detectAreaAndPrice(formattedAddress, components) {
 
 /* ── Load size ── */
 let selectedLoadSize = null;
+let suggestedPrice   = null;
 
 function selectLoadSize(size) {
   selectedLoadSize = size;
@@ -515,11 +524,13 @@ async function initAutocomplete() {
       console.log('Area match:', match);
 
       if (match) {
+        suggestedPrice = match.price;
         document.getElementById('area-input').value              = match.area;
         document.getElementById('suggestion-amount').textContent = `R${match.price.toLocaleString()}`;
         document.getElementById('price-suggestion').style.display = '';
         document.getElementById('price-input').value             = match.price;
       } else {
+        suggestedPrice = null;
         document.getElementById('area-input').value              = 'Other';
         document.getElementById('price-suggestion').style.display = 'none';
         document.getElementById('price-input').value             = '';
@@ -535,6 +546,11 @@ async function initAutocomplete() {
 }
 
 initAutocomplete().catch(console.error);
+
+document.getElementById('price-input').addEventListener('input', () => {
+  document.getElementById('price-error').style.display = 'none';
+  document.getElementById('price-wrapper').classList.remove('error');
+});
 
 /* ── Post job ── */
 async function postJob() {
@@ -560,12 +576,21 @@ async function postJob() {
     return;
   }
 
-  const val     = parseInt(document.getElementById('price-input').value, 10);
-  const wrapper = document.getElementById('price-wrapper');
-  if (!val || val < 50) {
+  const val      = parseInt(document.getElementById('price-input').value, 10);
+  const wrapper  = document.getElementById('price-wrapper');
+  const priceErr = document.getElementById('price-error');
+  const minPrice = suggestedPrice || 50;
+  if (!val || val < minPrice) {
     wrapper.classList.add('error');
     document.getElementById('price-input').focus();
-    setTimeout(() => wrapper.classList.remove('error'), 1200);
+    if (val && val < minPrice) {
+      priceErr.textContent = suggestedPrice
+        ? `Offer too low — suggested price for this area is R${suggestedPrice.toLocaleString()}`
+        : 'Offer too low — minimum offer is R50';
+      priceErr.style.display = '';
+    } else {
+      setTimeout(() => wrapper.classList.remove('error'), 1200);
+    }
     return;
   }
 
