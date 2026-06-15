@@ -306,38 +306,6 @@
 
     .btn-post:active { opacity: 0.84; transform: scale(0.98); }
 
-    /* ── Custom Places suggestions ── */
-    #places-dropdown-wrap { position: relative; }
-
-    #suggestions-list {
-      display: none;
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 0;
-      right: 0;
-      background: #FFFFFF;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-      z-index: 100;
-      list-style: none;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-    }
-
-    #suggestions-list.open { display: block; }
-
-    #suggestions-list li {
-      padding: 14px 16px;
-      border-bottom: 1px solid #E8EDF2;
-      font-size: 15px;
-      cursor: pointer;
-      color: #1A1A2E;
-      line-height: 1.35;
-    }
-
-    #suggestions-list li:last-child { border-bottom: none; }
-    #suggestions-list li:active     { background: #FFF8F3; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -346,7 +314,7 @@
       'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
     );
   </script>
-  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk&libraries=places&callback=initPlacesSearch"></script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk&libraries=places&callback=initAutocomplete"></script>
 </head>
 <body>
 <div class="page">
@@ -354,8 +322,7 @@
   <button class="back-btn" onclick="history.back()">← Back</button>
   <div class="page-title">Post a job</div>
 
-  <!-- Route card wrapped for dropdown positioning -->
-  <div id="places-dropdown-wrap">
+  <!-- Route card -->
   <div class="route-card" style="margin-top:0">
     <!-- Pickup row — display-only, not submitted -->
     <div class="route-row">
@@ -368,7 +335,7 @@
         <span class="route-row-value">Tshwane Fresh Produce Market</span>
       </div>
     </div>
-    <!-- Drop-off row — existing Places-bound input, unchanged -->
+    <!-- Drop-off row — Places-bound input -->
     <div class="route-row">
       <div class="route-dot-col">
         <div class="route-dot route-dot--dropoff"></div>
@@ -385,8 +352,6 @@
       </div>
     </div>
   </div>
-  <ul id="suggestions-list"></ul>
-  </div><!-- /places-dropdown-wrap -->
   <p class="route-hint">More pickup areas coming soon</p>
   <input type="hidden" id="area-input">
   <input type="hidden" id="lat-input">
@@ -525,112 +490,50 @@ function selectLoadSize(size) {
   document.querySelector(`.load-option[data-size="${size}"]`).classList.add('selected');
 }
 
-/* ── Places search — classic AutocompleteService + PlacesService ── */
-// initPlacesSearch() is called as the Google Maps script callback (no importLibrary)
-let _placeSvc   = null;
-let _debTimer   = null;
-let _predictions = [];
-
-function initPlacesSearch() {
-  const acService = new google.maps.places.AutocompleteService();
-
-  // PlacesService needs a DOM node for attributions
-  const attrEl = document.createElement('div');
-  document.body.appendChild(attrEl);
-  _placeSvc = new google.maps.places.PlacesService(attrEl);
-
+/* ── Google Places Autocomplete (classic widget) ── */
+// Called as the Google Maps script callback once the library is ready
+function initAutocomplete() {
   const input = document.getElementById('address-input');
 
-  input.addEventListener('keyup', () => {
-    clearTimeout(_debTimer);
-    const q = input.value.trim();
-    if (q.length < 3) { hideSuggestions(); return; }
-    _debTimer = setTimeout(() => {
-      acService.getPlacePredictions(
-        { input: q, componentRestrictions: { country: 'za' } },
-        (results, status) => {
-          if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.length) {
-            hideSuggestions(); return;
-          }
-          _predictions = results;
-          showSuggestions();
-        }
-      );
-    }, 400);
+  const ac = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: 'za' },
+    fields: ['formatted_address', 'geometry', 'address_components']
   });
 
-  // Close when tapping outside the route card / suggestions list
-  document.addEventListener('pointerdown', (e) => {
-    if (!e.target.closest('#places-dropdown-wrap')) hideSuggestions();
-  });
+  ac.addListener('place_changed', () => {
+    const place = ac.getPlace();
+    console.log('Place selected:', place.formatted_address);
+    console.log('Address components:', place.address_components);
 
-  console.log('Places search ready');
-}
+    if (!place.formatted_address) { console.warn('No address returned'); return; }
 
-function showSuggestions() {
-  const list = document.getElementById('suggestions-list');
-  list.innerHTML = '';
-  _predictions.forEach((p) => {
-    const li = document.createElement('li');
-    li.textContent = p.description;
-    li.addEventListener('pointerdown', (e) => {
-      e.preventDefault();  // keep input focused, prevent blur closing list first
-      e.stopPropagation(); // prevent document handler firing before selection
-      selectPlace(p.place_id, p.description);
-    });
-    list.appendChild(li);
-  });
-  list.classList.add('open');
-}
-
-function hideSuggestions() {
-  const list = document.getElementById('suggestions-list');
-  list.innerHTML = '';
-  list.classList.remove('open');
-}
-
-function selectPlace(placeId, description) {
-  const input = document.getElementById('address-input');
-  input.value = description; // optimistic fill while getDetails loads
-  hideSuggestions();
-
-  _placeSvc.getDetails(
-    { placeId, fields: ['formatted_address', 'geometry', 'address_components'] },
-    (place, status) => {
-      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
-        console.warn('getDetails failed:', status); return;
-      }
-      console.log('Place selected:', place.formatted_address);
-      console.log('Address components:', place.address_components);
-
-      if (place.formatted_address) input.value = place.formatted_address;
-
-      if (place.geometry) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        document.getElementById('lat-input').value = lat;
-        document.getElementById('lng-input').value = lng;
-        console.log('Coords:', lat, lng);
-      }
-
-      const match = detectAreaAndPrice(place.formatted_address, place.address_components);
-      console.log('Area match:', match);
-
-      if (match) {
-        suggestedPrice = match.price;
-        document.getElementById('area-input').value               = match.area;
-        document.getElementById('suggestion-amount').textContent  = `R${match.price.toLocaleString()}`;
-        document.getElementById('price-suggestion').style.display = '';
-        document.getElementById('price-input').value              = match.price;
-      } else {
-        suggestedPrice = null;
-        document.getElementById('area-input').value               = 'Other';
-        document.getElementById('price-suggestion').style.display = 'none';
-        document.getElementById('price-input').value              = '';
-        document.getElementById('price-input').placeholder        = 'Enter your price';
-      }
+    if (place.geometry) {
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      document.getElementById('lat-input').value = lat;
+      document.getElementById('lng-input').value = lng;
+      console.log('Coords:', lat, lng);
     }
-  );
+
+    const match = detectAreaAndPrice(place.formatted_address, place.address_components);
+    console.log('Area match:', match);
+
+    if (match) {
+      suggestedPrice = match.price;
+      document.getElementById('area-input').value               = match.area;
+      document.getElementById('suggestion-amount').textContent  = `R${match.price.toLocaleString()}`;
+      document.getElementById('price-suggestion').style.display = '';
+      document.getElementById('price-input').value              = match.price;
+    } else {
+      suggestedPrice = null;
+      document.getElementById('area-input').value               = 'Other';
+      document.getElementById('price-suggestion').style.display = 'none';
+      document.getElementById('price-input').value              = '';
+      document.getElementById('price-input').placeholder        = 'Enter your price';
+    }
+  });
+
+  console.log('Autocomplete ready');
 }
 
 document.getElementById('price-input').addEventListener('input', () => {
