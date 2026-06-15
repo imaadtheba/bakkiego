@@ -306,33 +306,38 @@
 
     .btn-post:active { opacity: 0.84; transform: scale(0.98); }
 
-    /* ── Custom Places dropdown ── */
+    /* ── Custom Places suggestions ── */
     #places-dropdown-wrap { position: relative; }
 
-    .places-dropdown {
+    #suggestions-list {
+      display: none;
       position: absolute;
       top: calc(100% + 6px);
       left: 0;
       right: 0;
       background: #FFFFFF;
-      border: 1.5px solid #E8EDF2;
-      border-radius: 14px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       z-index: 100;
+      list-style: none;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
 
-    .place-item {
-      padding: 14px 18px;
+    #suggestions-list.open { display: block; }
+
+    #suggestions-list li {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E8EDF2;
+      font-size: 15px;
       cursor: pointer;
-      border-bottom: 1px solid #F0F4F8;
+      color: #1A1A2E;
+      line-height: 1.35;
     }
 
-    .place-item:last-child { border-bottom: none; }
-    .place-item.highlighted { background: #FFF8F3; }
-
-    .place-item-main { font-size: 15px; font-weight: 600; color: #1A1A2E; }
-    .place-item-sec  { font-size: 12px; color: #8896A5; margin-top: 2px; }
+    #suggestions-list li:last-child { border-bottom: none; }
+    #suggestions-list li:active     { background: #FFF8F3; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -341,10 +346,7 @@
       'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
     );
   </script>
-  <script>
-    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
-    ({key: "AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk", v: "weekly"});
-  </script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk&libraries=places&callback=initPlacesSearch"></script>
 </head>
 <body>
 <div class="page">
@@ -383,6 +385,7 @@
       </div>
     </div>
   </div>
+  <ul id="suggestions-list"></ul>
   </div><!-- /places-dropdown-wrap -->
   <p class="route-hint">More pickup areas coming soon</p>
   <input type="hidden" id="area-input">
@@ -522,115 +525,76 @@ function selectLoadSize(size) {
   document.querySelector(`.load-option[data-size="${size}"]`).classList.add('selected');
 }
 
-/* ── Manual Places search (AutocompleteService + PlacesService) ── */
-let acService   = null;
-let placeSvc    = null;
-let debTimer    = null;
-let predictions = [];
-let activeIdx   = -1;
+/* ── Places search — classic AutocompleteService + PlacesService ── */
+// initPlacesSearch() is called as the Google Maps script callback (no importLibrary)
+let _placeSvc   = null;
+let _debTimer   = null;
+let _predictions = [];
 
-async function initPlacesSearch() {
-  try {
-    const { AutocompleteService, PlacesService, PlacesServiceStatus } =
-      await google.maps.importLibrary('places');
+function initPlacesSearch() {
+  const acService = new google.maps.places.AutocompleteService();
 
-    acService = new AutocompleteService();
+  // PlacesService needs a DOM node for attributions
+  const attrEl = document.createElement('div');
+  document.body.appendChild(attrEl);
+  _placeSvc = new google.maps.places.PlacesService(attrEl);
 
-    // PlacesService requires a DOM element for attribution rendering
-    const attrEl = document.createElement('div');
-    document.body.appendChild(attrEl);
-    placeSvc = new PlacesService(attrEl);
+  const input = document.getElementById('address-input');
 
-    const input = document.getElementById('address-input');
-
-    // Debounced prediction fetch on every keystroke
-    input.addEventListener('input', () => {
-      clearTimeout(debTimer);
-      closeDropdown();
-      const q = input.value.trim();
-      if (q.length < 2) return;
-      debTimer = setTimeout(() => {
-        acService.getPlacePredictions(
-          { input: q, componentRestrictions: { country: 'za' } },
-          (results, status) => {
-            if (status !== PlacesServiceStatus.OK || !results?.length) { closeDropdown(); return; }
-            predictions = results;
-            renderDropdown();
+  input.addEventListener('keyup', () => {
+    clearTimeout(_debTimer);
+    const q = input.value.trim();
+    if (q.length < 3) { hideSuggestions(); return; }
+    _debTimer = setTimeout(() => {
+      acService.getPlacePredictions(
+        { input: q, componentRestrictions: { country: 'za' } },
+        (results, status) => {
+          if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.length) {
+            hideSuggestions(); return;
           }
-        );
-      }, 300);
-    });
-
-    // Arrow-key navigation + Enter to select + Escape to close
-    input.addEventListener('keydown', (e) => {
-      const items = document.querySelectorAll('.place-item');
-      if (!items.length) return;
-      if      (e.key === 'ArrowDown')              { e.preventDefault(); setActive(Math.min(activeIdx + 1, items.length - 1), items); }
-      else if (e.key === 'ArrowUp')                { e.preventDefault(); setActive(Math.max(activeIdx - 1, 0), items); }
-      else if (e.key === 'Enter' && activeIdx >= 0){ e.preventDefault(); items[activeIdx].dispatchEvent(new Event('pointerdown')); }
-      else if (e.key === 'Escape')                  closeDropdown();
-    });
-
-    // Close when tapping outside the route card / dropdown
-    document.addEventListener('pointerdown', (e) => {
-      if (!e.target.closest('#places-dropdown-wrap')) closeDropdown();
-    });
-
-    console.log('Places search ready');
-  } catch (err) {
-    console.warn('Places init failed:', err);
-  }
-}
-
-function setActive(idx, items) {
-  activeIdx = idx;
-  items.forEach((el, i) => el.classList.toggle('highlighted', i === idx));
-  if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
-}
-
-function renderDropdown() {
-  let dropdown = document.getElementById('places-dropdown');
-  if (!dropdown) {
-    dropdown = document.createElement('div');
-    dropdown.id        = 'places-dropdown';
-    dropdown.className = 'places-dropdown';
-    document.getElementById('places-dropdown-wrap').appendChild(dropdown);
-  }
-  activeIdx = -1;
-  dropdown.innerHTML = predictions.map(p => `
-    <div class="place-item" data-place-id="${escHtml(p.place_id)}">
-      <div class="place-item-main">${escHtml(p.structured_formatting?.main_text || p.description)}</div>
-      ${p.structured_formatting?.secondary_text
-        ? `<div class="place-item-sec">${escHtml(p.structured_formatting.secondary_text)}</div>`
-        : ''}
-    </div>`).join('');
-
-  dropdown.querySelectorAll('.place-item').forEach(item => {
-    item.addEventListener('pointerdown', (e) => {
-      e.preventDefault();   // prevent input blur firing before selection
-      e.stopPropagation();  // prevent document handler closing the dropdown first
-      selectPlace(item.dataset.placeId);
-    });
+          _predictions = results;
+          showSuggestions();
+        }
+      );
+    }, 400);
   });
+
+  // Close when tapping outside the route card / suggestions list
+  document.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('#places-dropdown-wrap')) hideSuggestions();
+  });
+
+  console.log('Places search ready');
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function showSuggestions() {
+  const list = document.getElementById('suggestions-list');
+  list.innerHTML = '';
+  _predictions.forEach((p) => {
+    const li = document.createElement('li');
+    li.textContent = p.description;
+    li.addEventListener('pointerdown', (e) => {
+      e.preventDefault();  // keep input focused, prevent blur closing list first
+      e.stopPropagation(); // prevent document handler firing before selection
+      selectPlace(p.place_id, p.description);
+    });
+    list.appendChild(li);
+  });
+  list.classList.add('open');
 }
 
-function closeDropdown() {
-  const d = document.getElementById('places-dropdown');
-  if (d) d.remove();
-  activeIdx = -1;
+function hideSuggestions() {
+  const list = document.getElementById('suggestions-list');
+  list.innerHTML = '';
+  list.classList.remove('open');
 }
 
-function selectPlace(placeId) {
-  // Optimistically fill input from prediction text while details load
-  const p = predictions.find(x => x.place_id === placeId);
-  if (p) document.getElementById('address-input').value = p.description;
-  closeDropdown();
+function selectPlace(placeId, description) {
+  const input = document.getElementById('address-input');
+  input.value = description; // optimistic fill while getDetails loads
+  hideSuggestions();
 
-  placeSvc.getDetails(
+  _placeSvc.getDetails(
     { placeId, fields: ['formatted_address', 'geometry', 'address_components'] },
     (place, status) => {
       if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
@@ -639,7 +603,6 @@ function selectPlace(placeId) {
       console.log('Place selected:', place.formatted_address);
       console.log('Address components:', place.address_components);
 
-      const input = document.getElementById('address-input');
       if (place.formatted_address) input.value = place.formatted_address;
 
       if (place.geometry) {
@@ -669,8 +632,6 @@ function selectPlace(placeId) {
     }
   );
 }
-
-initPlacesSearch().catch(console.error);
 
 document.getElementById('price-input').addEventListener('input', () => {
   document.getElementById('price-error').style.display = 'none';
