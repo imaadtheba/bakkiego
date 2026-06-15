@@ -305,6 +305,20 @@
     }
 
     .btn-post:active { opacity: 0.84; transform: scale(0.98); }
+
+    /* ── Google Places dropdown ── */
+    /* Force the pac-container above all Capacitor WebView layers and
+       prevent any ancestor overflow:hidden from clipping it. */
+    .pac-container {
+      z-index: 9999 !important;
+      position: fixed !important; /* escapes any stacking-context trap on Android */
+      border-radius: 12px;
+      margin-top: 4px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* pac-container is appended to <body> so body must not clip it */
+    body { overflow-x: hidden; /* only horizontal — never clip vertical */ }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -499,10 +513,22 @@ async function initAutocomplete() {
 
     const input = document.getElementById('address-input');
 
+    // Bias results toward South Africa (SW → NE bounding box)
+    const saBounds = new google.maps.LatLngBounds(
+      { lat: -34.82, lng: 16.45 },
+      { lat: -22.09, lng: 32.89 }
+    );
+
     const ac = new Autocomplete(input, {
       componentRestrictions: { country: 'za' },
-      fields: ['formatted_address', 'geometry', 'address_components']
+      fields: ['formatted_address', 'geometry', 'address_components'],
+      bounds: saBounds,
+      strictBounds: false
     });
+
+    // Redundant setOptions call — required on some Android WebView builds
+    // where constructor options are silently dropped.
+    ac.setOptions({ componentRestrictions: { country: 'za' }, bounds: saBounds });
 
     ac.addListener('place_changed', () => {
       const place = ac.getPlace();
