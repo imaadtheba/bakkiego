@@ -131,29 +131,55 @@
       opacity: 0.7;
     }
 
-    /* Active job banner */
-    .active-banner {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      background: #FF6D00;
-      color: #1A1A2E;
+    /* Active job card */
+    .active-job-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E8EDF2;
+      border-left: 4px solid #FF6D00;
       border-radius: 16px;
       padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    .active-job-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      color: #FF6D00;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+    }
+
+    .active-job-status {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1A1A2E;
+      margin-bottom: 4px;
+    }
+
+    .active-job-address {
+      font-size: 13px;
+      color: #6B7280;
+      margin-bottom: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .active-job-btn {
+      display: block;
+      background: #FF6D00;
+      color: #1A1A2E;
+      border-radius: 12px;
+      padding: 12px 16px;
       font-size: 15px;
       font-weight: 700;
       text-decoration: none;
-      margin-bottom: 14px;
-      transition: opacity 0.2s ease;
+      text-align: center;
+      transition: opacity 0.2s;
     }
 
-    .active-banner.visible {
-      display: flex;
-    }
-
-    .active-banner:active {
-      opacity: 0.84;
-    }
+    .active-job-btn:active { opacity: 0.84; }
 
     /* Trips section */
     .section {
@@ -252,6 +278,14 @@
     <button class="btn-logout" onclick="logout()">Log out</button>
   </div>
 
+  <!-- Active job card — shown when trader has a job in progress -->
+  <div class="active-job-card" id="active-job-card" style="display:none">
+    <div class="active-job-eyebrow">Active Job</div>
+    <div class="active-job-status" id="active-job-status"></div>
+    <div class="active-job-address" id="active-job-address"></div>
+    <a href="job-status.html" class="active-job-btn">View Job →</a>
+  </div>
+
   <a href="job-post.html" class="cta-btn">I NEED A BAKKIE 🚛</a>
 
   <div class="info-card">
@@ -261,11 +295,6 @@
       <div class="info-card-tagline">Post a job, get a bakkie in minutes</div>
     </div>
   </div>
-
-  <a href="job-status.html" class="active-banner" id="active-banner">
-    <span>You have an active job</span>
-    <span>→</span>
-  </a>
 
   <div class="section">
     <div class="section-label">Recent Trips</div>
@@ -289,13 +318,28 @@
       window.location.href = 'login.html';
     }
 
+    const STATUS_LABELS = {
+      posted:      'Waiting for a driver',
+      countered:   'Driver made a counter offer',
+      accepted:    'Driver accepted your job',
+      on_the_way:  'Driver is on the way',
+      in_progress: 'Trip in progress',
+    };
+
     async function loadPage() {
-      // Active job banner
+      // Active job card
       const { data: activeJob } = await supabase
-        .from('jobs').select('id').eq('trader_id', user.id)
+        .from('jobs').select('id, status, address')
+        .eq('trader_id', user.id)
         .neq('status', 'completed').neq('status', 'cancelled')
+        .order('created_at', { ascending: false })
         .limit(1).maybeSingle();
-      if (activeJob) document.getElementById('active-banner').classList.add('visible');
+
+      if (activeJob) {
+        document.getElementById('active-job-status').textContent  = STATUS_LABELS[activeJob.status] || activeJob.status;
+        document.getElementById('active-job-address').textContent = activeJob.address || '';
+        document.getElementById('active-job-card').style.display  = 'block';
+      }
 
       // Recent completed trips
       const listEl = document.getElementById('trips-list');
