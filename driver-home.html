@@ -337,6 +337,55 @@
       padding-top: 2px;
     }
 
+    /* ── Active job card ── */
+    .active-job-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E8EDF2;
+      border-left: 4px solid #FF6D00;
+      border-radius: 16px;
+      padding: 16px 20px;
+    }
+
+    .active-job-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      color: #FF6D00;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+    }
+
+    .active-job-status {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1A1A2E;
+      margin-bottom: 4px;
+    }
+
+    .active-job-address {
+      font-size: 13px;
+      color: #6B7280;
+      margin-bottom: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .active-job-btn {
+      display: block;
+      background: #FF6D00;
+      color: #1A1A2E;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.2s;
+    }
+
+    .active-job-btn:active { opacity: 0.84; }
+
     /* ── Offline message ── */
     .offline-msg {
       text-align: center;
@@ -384,6 +433,16 @@
     <div class="stat-card">
       <div class="stat-label">Trips Today</div>
       <div class="stat-value" id="stat-trips">0</div>
+    </div>
+  </div>
+
+  <!-- Active job card — visible regardless of online state -->
+  <div id="active-job-section" style="display:none">
+    <div class="active-job-card">
+      <div class="active-job-eyebrow">Active Job</div>
+      <div class="active-job-status" id="active-job-status"></div>
+      <div class="active-job-address" id="active-job-address"></div>
+      <a id="active-job-link" href="#" class="active-job-btn">View Job →</a>
     </div>
   </div>
 
@@ -443,6 +502,31 @@ async function loadStats() {
   document.getElementById('stat-trips').textContent    = todayJobs.length;
 }
 
+/* ── Active job ── */
+const ACTIVE_STATUS_LABELS = {
+  accepted:    'Job accepted — get ready',
+  on_the_way:  'Heading to pickup',
+  in_progress: 'Trip in progress',
+};
+
+async function loadActiveJob() {
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('id, status, address, area')
+    .eq('driver_id', user.id)
+    .in('status', ['accepted', 'on_the_way', 'in_progress'])
+    .limit(1).maybeSingle();
+
+  const section = document.getElementById('active-job-section');
+  if (!job) { section.style.display = 'none'; return; }
+
+  document.getElementById('active-job-status').textContent  = ACTIVE_STATUS_LABELS[job.status] || job.status;
+  document.getElementById('active-job-address').textContent = job.address || job.area || '';
+  document.getElementById('active-job-link').href           = `driver-job.html?id=${job.id}`;
+  localStorage.setItem('driver_active_job_id', job.id);
+  section.style.display = '';
+}
+
 /* ── Jobs ── */
 async function patchJob(id, updates) {
   const { error } = await supabase.from('jobs').update(updates).eq('id', id);
@@ -457,9 +541,8 @@ async function renderJobs() {
     const { data: jobs, error } = await supabase
       .from('jobs')
       .select('*, trader:users!trader_id(name, phone)')
-      .or(`driver_id.is.null,driver_id.eq.${user.id}`)
-      .neq('status', 'completed')
-      .neq('status', 'cancelled')
+      .eq('status', 'posted')
+      .is('driver_id', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -572,6 +655,7 @@ function setupRealtime() {
   supabase.channel('driver-feed-' + user.id)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, (payload) => {
       console.log('Feed updated (realtime):', payload.eventType, payload.new?.status || payload.old?.status);
+      loadActiveJob();
       if (isOnline) renderJobs();
     })
     .subscribe((status, err) => {
@@ -602,6 +686,7 @@ function logout() {
 document.getElementById('driver-name').textContent = user.name || user.phone || '';
 
 loadStats();
+loadActiveJob();
 applyOnlineState();
 setupRealtime();
 </script>
