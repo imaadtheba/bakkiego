@@ -191,17 +191,31 @@
       margin: 0 auto 12px;
     }
 
+    .driver-card-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8896A5;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+
     .driver-card-name {
       font-size: 18px;
       font-weight: 700;
       color: #1A1A2E;
-      margin-bottom: 4px;
+      margin-bottom: 10px;
     }
 
-    .driver-card-vehicle {
+    .driver-card-detail {
       font-size: 14px;
       color: #6B7280;
-      line-height: 1.5;
+      line-height: 1.6;
+    }
+
+    .driver-card-detail-label {
+      font-weight: 600;
+      color: #1A1A2E;
     }
 
     /* ── Accepted state ── */
@@ -307,7 +321,7 @@ function viewNegotiating() {
 function driverCard() {
   if (!job.driver_id || !job.driver) return '';
   const d = job.driver;
-  const vehicle = [d.vehicle_colour, d.vehicle_model, d.vehicle_plate].filter(Boolean).join(' · ');
+  const vehicleDesc = [d.vehicle_colour, d.vehicle_model].filter(Boolean).join(' ');
   return `
     <div class="driver-card">
       <div class="driver-card-icon">
@@ -316,8 +330,10 @@ function driverCard() {
           <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </div>
+      <div class="driver-card-eyebrow">Your Driver</div>
       <div class="driver-card-name">${d.name || 'Your driver'}</div>
-      ${vehicle ? `<div class="driver-card-vehicle">${vehicle}</div>` : ''}
+      ${vehicleDesc ? `<div class="driver-card-detail"><span class="driver-card-detail-label">Vehicle:</span> ${vehicleDesc}</div>` : ''}
+      ${d.vehicle_plate ? `<div class="driver-card-detail"><span class="driver-card-detail-label">Plate:</span> ${d.vehicle_plate}</div>` : ''}
     </div>`;
 }
 
