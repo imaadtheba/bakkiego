@@ -538,11 +538,13 @@ async function renderJobs() {
   listEl.innerHTML = '<div class="empty-state">Loading…</div>';
 
   try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: jobs, error } = await supabase
       .from('jobs')
       .select('*, trader:users!trader_id(name, phone)')
       .eq('status', 'posted')
       .is('driver_id', null)
+      .gte('created_at', since)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -560,41 +562,29 @@ async function renderJobs() {
 }
 
 function buildJobCard(job) {
-  const id      = job.id;
-  const isMyJob = job.driver_id === user.id;
-  const price   = job.counter_price || job.offer_price;
-  const card    = document.createElement('div');
+  const id    = job.id;
+  const price = job.counter_price || job.offer_price;
+  const card  = document.createElement('div');
   card.className = 'job-card';
 
-  let actionsHTML = '';
-
-  if (!isMyJob && job.status === 'posted') {
-    // Available — offer accept or counter
-    actionsHTML = `
-      <div class="job-actions" id="actions-${id}">
-        <button class="btn-accept"  onclick="acceptJob('${id}')">ACCEPT</button>
-        <button class="btn-counter" onclick="openCounter('${id}')">COUNTER</button>
+  const actionsHTML = `
+    <div class="job-actions" id="actions-${id}">
+      <button class="btn-accept"  onclick="acceptJob('${id}')">ACCEPT</button>
+      <button class="btn-counter" onclick="openCounter('${id}')">COUNTER</button>
+    </div>
+    <div class="counter-form" id="counter-form-${id}">
+      <div class="counter-row">
+        <input
+          type="number"
+          class="counter-input"
+          id="counter-input-${id}"
+          placeholder="Your price (R)"
+          inputmode="numeric"
+          min="1"
+        >
+        <button class="btn-submit" onclick="submitCounter('${id}')">Submit</button>
       </div>
-      <div class="counter-form" id="counter-form-${id}">
-        <div class="counter-row">
-          <input
-            type="number"
-            class="counter-input"
-            id="counter-input-${id}"
-            placeholder="Your price (R)"
-            inputmode="numeric"
-            min="1"
-          >
-          <button class="btn-submit" onclick="submitCounter('${id}')">Submit</button>
-        </div>
-      </div>`;
-  } else if (isMyJob && job.status === 'countered') {
-    actionsHTML = `<div class="counter-sent">Counter sent: R${job.counter_price} — waiting for trader</div>`;
-  } else if (isMyJob && job.status === 'accepted') {
-    actionsHTML = `<button class="btn-accept" onclick="startJob('${id}')">START JOB →</button>`;
-  } else if (isMyJob && job.status === 'in_progress') {
-    actionsHTML = `<div class="counter-sent">Job in progress</div>`;
-  }
+    </div>`;
 
   const loadLabels = { small: '📦 Small load', medium: '🛒 Half bakkie', large: '🚛 Full bakkie' };
   const loadTag    = job.load_size ? `<span class="job-load-tag">${loadLabels[job.load_size] || job.load_size}</span>` : '';
