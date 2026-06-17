@@ -170,18 +170,38 @@
     }
 
     /* ── Driver card ── */
-    .driver-card-wrap {
+    .driver-card {
       width: 100%;
-      text-align: left;
+      background: #FFFFFF;
+      border: 1px solid #E8EDF2;
+      border-radius: 16px;
+      padding: 20px 16px 16px;
+      text-align: center;
+      margin-top: 16px;
     }
 
-    .driver-card-label {
-      font-size: 12px;
+    .driver-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #1B4332;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    .driver-card-name {
+      font-size: 18px;
       font-weight: 700;
+      color: #1A1A2E;
+      margin-bottom: 4px;
+    }
+
+    .driver-card-vehicle {
+      font-size: 14px;
       color: #6B7280;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin: 20px 0 8px;
+      line-height: 1.5;
     }
 
     /* ── Accepted state ── */
@@ -189,12 +209,6 @@
       font-size: 60px;
       margin-bottom: 16px;
       line-height: 1;
-    }
-
-    .driver-name {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 16px 0 4px;
     }
 
     .agreed-price {
@@ -291,17 +305,19 @@ function viewNegotiating() {
 }
 
 function driverCard() {
-  if (!job.driver) return '';
+  if (!job.driver_id || !job.driver) return '';
   const d = job.driver;
+  const vehicle = [d.vehicle_colour, d.vehicle_model, d.vehicle_plate].filter(Boolean).join(' · ');
   return `
-    <div class="driver-card-wrap">
-      <div class="driver-card-label">Your Driver</div>
-      <div class="info-card" style="margin-top:0">
-        <div class="info-row"><span class="info-label">Name</span><span class="info-value">${d.name || '—'}</span></div>
-        ${d.vehicle_model  ? `<div class="info-row"><span class="info-label">Vehicle</span><span class="info-value">${d.vehicle_model}</span></div>`  : ''}
-        ${d.vehicle_colour ? `<div class="info-row"><span class="info-label">Colour</span><span class="info-value">${d.vehicle_colour}</span></div>` : ''}
-        ${d.vehicle_plate  ? `<div class="info-row"><span class="info-label">Plate</span><span class="info-value">${d.vehicle_plate}</span></div>`   : ''}
+    <div class="driver-card">
+      <div class="driver-card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" fill="white"/>
+          <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
       </div>
+      <div class="driver-card-name">${d.name || 'Your driver'}</div>
+      ${vehicle ? `<div class="driver-card-vehicle">${vehicle}</div>` : ''}
     </div>`;
 }
 
@@ -315,7 +331,6 @@ function viewDriverStatus(emoji, title, subtitle) {
       <div class="big-emoji">${emoji}</div>
       <div class="view-title">${title}</div>
       <div class="view-sub">${subtitle}</div>
-      <div class="driver-name">${driverName}</div>
       <div class="agreed-price">R${price}</div>
       <div class="info-card">
         <div class="info-row"><span class="info-label">Area</span><span class="info-value">${job.area}</span></div>
@@ -341,6 +356,7 @@ function viewCompleted() {
         <div class="info-row"><span class="info-label">Paid</span><span class="info-value green">R${price}</span></div>
         <div class="info-row"><span class="info-label">Payment</span><span class="info-value">Cash</span></div>
       </div>
+      ${driverCard()}
       <button class="btn btn-green" style="width:100%" onclick="location.href='trader-home.html'">Book another bakkie</button>
     </div>`;
 }
