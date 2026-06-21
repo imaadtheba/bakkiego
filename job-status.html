@@ -415,7 +415,16 @@ function bindActions() {
 }
 
 function setupRealtime() {
-  supabase.channel('job-status-' + job.id)
+  const channelName = 'job-status-' + job.id;
+  console.log('[realtime] creating channel:', channelName);
+  const channel = supabase.channel(channelName);
+  console.log('[realtime] channel object created:', channel);
+
+  channel
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs',
+        filter: `id=eq.${job.id}` }, (payload) => {
+      console.log('[realtime] event received:', payload.eventType, 'old:', payload.old, 'new:', payload.new);
+    })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
         filter: `id=eq.${job.id}` }, async (payload) => {
       console.log('Job updated (realtime):', payload.new?.status);
@@ -424,7 +433,7 @@ function setupRealtime() {
       if (data) { job = data; render(); }
     })
     .subscribe((status, err) => {
-      console.log('job-status realtime:', status, err || '');
+      console.log('[realtime] subscribe callback - status:', status, 'error:', err || 'none');
     });
 }
 

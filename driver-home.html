@@ -566,6 +566,7 @@ function buildJobCard(job) {
   const price = job.counter_price || job.offer_price;
   const card  = document.createElement('div');
   card.className = 'job-card';
+  card.id = 'job-card-' + id;
 
   const actionsHTML = `
     <div class="job-actions" id="actions-${id}">
@@ -641,16 +642,65 @@ function startJob(id) {
   window.location.href = 'driver-job.html';
 }
 
-function setupRealtime() {
-  supabase.channel('driver-feed-' + user.id)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, (payload) => {
-      console.log('Feed updated (realtime):', payload.eventType, payload.new?.status || payload.old?.status);
-      loadActiveJob();
-      if (isOnline) renderJobs();
+function setupFeedRealtime() {
+  const channelName = 'driver-feed-' + user.id;
+  console.log('[realtime] creating channel:', channelName);
+  const channel = supabase.channel(channelName);
+  console.log('[realtime] channel object created:', channel);
+
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'jobs',
+        filter: 'status=eq.posted' }, (payload) => {
+      console.log('[realtime] feed event received: INSERT', payload.new);
+      const job = payload.new;
+      if (job.driver_id) return; // already claimed somehow — skip
+      if (!isOnline) return;
+      if (document.getElementById('job-card-' + job.id)) return; // already in feed
+
+      const listEl = document.getElementById('job-list');
+      const emptyState = listEl.querySelector('.empty-state');
+      if (emptyState) listEl.innerHTML = '';
+      listEl.prepend(buildJobCard(job));
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
+        filter: 'status=neq.posted' }, (payload) => {
+      console.log('[realtime] feed event received: UPDATE', payload.old, '->', payload.new);
+      const cardEl = document.getElementById('job-card-' + payload.new.id);
+      if (cardEl) {
+        cardEl.remove();
+        const listEl = document.getElementById('job-list');
+        if (!listEl.children.length) {
+          listEl.innerHTML = '<div class="empty-state">No jobs available</div>';
+        }
+      }
     })
     .subscribe((status, err) => {
-      console.log('driver-home realtime:', status, err || '');
+      console.log('[realtime] feed subscribe callback - status:', status, 'error:', err || 'none');
     });
+}
+
+function setupActiveJobRealtime() {
+  const channelName = 'driver-active-' + user.id;
+  console.log('[realtime] creating channel:', channelName);
+  const channel = supabase.channel(channelName);
+  console.log('[realtime] channel object created:', channel);
+
+  channel
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
+        filter: `driver_id=eq.${user.id}` }, (payload) => {
+      console.log('[realtime] active job event received: UPDATE', payload.old, '->', payload.new);
+      if (['accepted', 'on_the_way', 'in_progress', 'completed', 'cancelled'].includes(payload.new.status)) {
+        loadActiveJob();
+      }
+    })
+    .subscribe((status, err) => {
+      console.log('[realtime] active job subscribe callback - status:', status, 'error:', err || 'none');
+    });
+}
+
+function setupRealtime() {
+  setupFeedRealtime();
+  setupActiveJobRealtime();
 }
 
 /* ── Helpers ── */

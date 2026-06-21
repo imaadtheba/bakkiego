@@ -326,6 +326,43 @@
       in_progress: 'Trip in progress',
     };
 
+    function renderActiveJob(activeJob) {
+      if (!activeJob) {
+        document.getElementById('active-job-card').style.display = 'none';
+        return;
+      }
+      document.getElementById('active-job-status').textContent  = STATUS_LABELS[activeJob.status] || activeJob.status;
+      document.getElementById('active-job-address').textContent = activeJob.address || '';
+      document.getElementById('active-job-card').style.display  = 'block';
+    }
+
+    function setupRealtime(jobId) {
+      const channelName = 'trader-home-' + jobId;
+      console.log('[realtime] creating channel:', channelName);
+      const channel = supabase.channel(channelName);
+      console.log('[realtime] channel object created:', channel);
+
+      channel
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs',
+            filter: `id=eq.${jobId}` }, (payload) => {
+          console.log('[realtime] event received:', payload.eventType, 'old:', payload.old, 'new:', payload.new);
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
+            filter: `id=eq.${jobId}` }, async (payload) => {
+          console.log('Job updated (realtime):', payload.new?.status);
+          const { data } = await supabase
+            .from('jobs').select('id, status, address')
+            .eq('id', jobId).single();
+          if (data) {
+            const stillActive = data.status !== 'completed' && data.status !== 'cancelled';
+            renderActiveJob(stillActive ? data : null);
+          }
+        })
+        .subscribe((status, err) => {
+          console.log('[realtime] subscribe callback - status:', status, 'error:', err || 'none');
+        });
+    }
+
     async function loadPage() {
       // Active job card
       const { data: activeJob } = await supabase
@@ -335,11 +372,8 @@
         .order('created_at', { ascending: false })
         .limit(1).maybeSingle();
 
-      if (activeJob) {
-        document.getElementById('active-job-status').textContent  = STATUS_LABELS[activeJob.status] || activeJob.status;
-        document.getElementById('active-job-address').textContent = activeJob.address || '';
-        document.getElementById('active-job-card').style.display  = 'block';
-      }
+      renderActiveJob(activeJob);
+      if (activeJob) setupRealtime(activeJob.id);
 
       // Recent completed trips
       const listEl = document.getElementById('trips-list');
