@@ -465,10 +465,20 @@ if (!user) { window.location.replace('login.html'); }
 let isOnline = localStorage.getItem('driver_online') === 'true';
 
 /* ── Toggle ── */
-function toggleOnline() {
+async function toggleOnline() {
   isOnline = !isOnline;
   localStorage.setItem('driver_online', String(isOnline));
   applyOnlineState();
+
+  const { error } = await supabase
+    .from('users')
+    .update({ online: isOnline })
+    .eq('id', user.id);
+  if (error) {
+    console.error('[toggleOnline] Supabase update failed:', error);
+  } else {
+    console.log('[toggleOnline] Supabase updated online =', isOnline);
+  }
 }
 
 function applyOnlineState() {
