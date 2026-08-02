@@ -137,7 +137,7 @@
       border: 1.5px solid #E8EDF2;
       border-left: 4px solid #FF6D00;
       border-radius: 16px;
-      padding: 16px 20px;
+      padding: 24px 28px;
       margin-bottom: 16px;
     }
 
@@ -151,7 +151,7 @@
     }
 
     .active-job-status {
-      font-size: 17px;
+      font-size: 19px;
       font-weight: 700;
       color: #1A1A2E;
       margin-bottom: 4px;
@@ -160,7 +160,7 @@
     .active-job-address {
       font-size: 13px;
       color: #6B7280;
-      margin-bottom: 14px;
+      margin-bottom: 20px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -286,7 +286,7 @@
     <a href="job-status.html" class="active-job-btn">View Job →</a>
   </div>
 
-  <a href="job-post.html" class="cta-btn">I NEED A BAKKIE 🚛</a>
+  <a href="job-post.html" class="cta-btn" id="cta-bakkie">I NEED A BAKKIE 🚛</a>
 
   <div class="info-card">
     <span class="info-card-icon">📍</span>
@@ -329,11 +329,31 @@
     function renderActiveJob(activeJob) {
       if (!activeJob) {
         document.getElementById('active-job-card').style.display = 'none';
+        document.getElementById('cta-bakkie').style.display      = '';
         return;
       }
       document.getElementById('active-job-status').textContent  = STATUS_LABELS[activeJob.status] || activeJob.status;
       document.getElementById('active-job-address').textContent = activeJob.address || '';
       document.getElementById('active-job-card').style.display  = 'block';
+      document.getElementById('cta-bakkie').style.display       = 'none';
+    }
+
+    // Returns null (and marks completed in Supabase) if the job has been stuck
+    // in on_the_way/in_progress for more than 8 hours; otherwise returns the job.
+    async function autoCompleteIfStale(job) {
+      if (!job) return null;
+      const staleStatuses = ['on_the_way', 'in_progress'];
+      if (!staleStatuses.includes(job.status)) return job;
+      const ageMs = Date.now() - new Date(job.updated_at).getTime();
+      if (ageMs < 8 * 60 * 60 * 1000) return job;
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status: 'completed', completed_at: now })
+        .eq('id', job.id);
+      if (error) console.error('[autoComplete] Supabase update failed:', error);
+      else console.log('[autoComplete] Job', job.id, 'auto-completed after 8h stale');
+      return null;
     }
 
     function setupRealtime(jobId) {
@@ -351,11 +371,12 @@
             filter: `id=eq.${jobId}` }, async (payload) => {
           console.log('Job updated (realtime):', payload.new?.status);
           const { data } = await supabase
-            .from('jobs').select('id, status, address')
+            .from('jobs').select('id, status, address, updated_at')
             .eq('id', jobId).single();
           if (data) {
             const stillActive = data.status !== 'completed' && data.status !== 'cancelled';
-            renderActiveJob(stillActive ? data : null);
+            const job = stillActive ? await autoCompleteIfStale(data) : null;
+            renderActiveJob(job);
           }
         })
         .subscribe((status, err) => {
@@ -365,13 +386,14 @@
 
     async function loadPage() {
       // Active job card
-      const { data: activeJob } = await supabase
-        .from('jobs').select('id, status, address')
+      const { data: rawActiveJob } = await supabase
+        .from('jobs').select('id, status, address, updated_at')
         .eq('trader_id', user.id)
         .neq('status', 'completed').neq('status', 'cancelled')
         .order('created_at', { ascending: false })
         .limit(1).maybeSingle();
 
+      const activeJob = await autoCompleteIfStale(rawActiveJob);
       renderActiveJob(activeJob);
       if (activeJob) setupRealtime(activeJob.id);
 
