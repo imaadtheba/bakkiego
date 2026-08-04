@@ -357,7 +357,7 @@ function viewDriverStatus(emoji, title, subtitle) {
       ${driverCard()}
       <a href="${waPhone ? `https://wa.me/${waPhone}` : '#'}" class="btn btn-green" style="width:100%">WhatsApp ${driverName}</a>
       ${(user.role === 'trader' && (job.status === 'on_the_way' || job.status === 'in_progress')) ? `
-      <button class="btn btn-green" style="width:100%" id="btn-mark-delivered">Mark as Delivered</button>
+      <button class="btn" style="width:100%;margin-top:16px;background:#fff;border:2px solid #FF6D00;color:#FF6D00" id="btn-mark-delivered">Mark as Delivered</button>
       <div id="delivered-confirm" style="display:none;text-align:center;color:#00C853;font-weight:700;font-size:14px;margin-top:6px">Delivery confirmed!</div>
       ` : ''}
     </div>`;
