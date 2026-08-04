@@ -356,6 +356,10 @@ function viewDriverStatus(emoji, title, subtitle) {
       </div>
       ${driverCard()}
       <a href="${waPhone ? `https://wa.me/${waPhone}` : '#'}" class="btn btn-green" style="width:100%">WhatsApp ${driverName}</a>
+      ${(user.role === 'trader' && (job.status === 'on_the_way' || job.status === 'in_progress')) ? `
+      <button class="btn btn-green" style="width:100%" id="btn-mark-delivered">Mark as Delivered</button>
+      <div id="delivered-confirm" style="display:none;text-align:center;color:#00C853;font-weight:700;font-size:14px;margin-top:6px">Delivery confirmed!</div>
+      ` : ''}
     </div>`;
 }
 
@@ -411,6 +415,15 @@ function bindActions() {
     const { error } = await supabase.from('jobs').delete().eq('id', job.id);
     if (error) { console.error('Decline error:', error); alert('Failed to decline offer.'); return; }
     location.href = 'trader-home.html';
+  });
+
+  const btnMarkDelivered = document.getElementById('btn-mark-delivered');
+  if (btnMarkDelivered) btnMarkDelivered.addEventListener('click', async () => {
+    if (!confirm('Confirm delivery?')) return;
+    btnMarkDelivered.disabled = true;
+    await patchJob({ status: 'completed', completed_at: new Date().toISOString() });
+    document.getElementById('delivered-confirm').style.display = 'block';
+    setTimeout(render, 1200);
   });
 }
 
