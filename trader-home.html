@@ -389,7 +389,7 @@
       const { data: rawActiveJob } = await supabase
         .from('jobs').select('id, status, address, updated_at')
         .eq('trader_id', user.id)
-        .neq('status', 'completed').neq('status', 'cancelled')
+        .not('status', 'in', '("completed","cancelled")')
         .order('created_at', { ascending: false })
         .limit(1).maybeSingle();
 
