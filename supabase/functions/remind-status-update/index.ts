@@ -52,6 +52,17 @@ Deno.serve(async () => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
+    // Auto-expire jobs stuck in on_the_way/in_progress for more than 8 hours
+    const expiryCutoff = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
+    const now = new Date().toISOString()
+    const { error: expireError } = await supabase
+      .from('jobs')
+      .update({ status: 'completed', completed_at: now })
+      .in('status', ['on_the_way', 'in_progress'])
+      .lt('updated_at', expiryCutoff)
+    if (expireError) console.error('[remind-status-update] auto-expire error:', expireError)
+    else console.log('[remind-status-update] auto-expire ran OK')
+
     // Fetch all active jobs older than the minimum threshold (5 min)
     const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     const { data: jobs, error } = await supabase
