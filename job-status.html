@@ -342,10 +342,8 @@ function viewDriverStatus(emoji, title, subtitle) {
   const driverName  = job.driver?.name  || 'Your driver';
   const driverPhone = job.driver?.phone || '';
   const waPhone     = driverPhone.startsWith('0') ? '27' + driverPhone.slice(1) : driverPhone.replace(/\D/g,'');
-  const ageMs       = Date.now() - new Date(job.updated_at).getTime();
   const showNoShow  = user.role === 'trader'
-    && (job.status === 'accepted' || job.status === 'on_the_way')
-    && ageMs > 10 * 60 * 1000;
+    && (job.status === 'accepted' || job.status === 'on_the_way');
   return `
     <div class="view-center">
       <div class="big-emoji">${emoji}</div>
