@@ -337,8 +337,7 @@ function driverCard() {
       </div>
       <div class="driver-card-eyebrow">Your Driver</div>
       <div class="driver-card-name">${d.name || 'Your driver'}</div>
-      ${vehicleDesc ? `<div class="driver-card-detail"><span class="driver-card-detail-label">Vehicle:</span> ${vehicleDesc}</div>` : ''}
-      ${d.vehicle_plate ? `<div class="driver-card-detail"><span class="driver-card-detail-label">Plate:</span> ${d.vehicle_plate}</div>` : ''}
+      ${(vehicleDesc || d.vehicle_plate) ? `<div class="driver-card-detail">${[vehicleDesc, d.vehicle_plate].filter(Boolean).join(' · ')}</div>` : ''}
     </div>`;
 }
 
