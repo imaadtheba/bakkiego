@@ -243,6 +243,10 @@
 <body>
 <div class="page">
   <a href="trader-home.html" class="back-link">← Home</a>
+  <div id="reminder-banner" style="display:none;background:#FFF8E1;border:1.5px solid #F59E0B;border-radius:12px;padding:12px 16px;margin-top:12px;font-size:14px;font-weight:600;color:#92400E;align-items:center;justify-content:space-between;gap:12px">
+    <span id="reminder-text"></span>
+    <button onclick="dismissReminder()" style="background:none;border:none;cursor:pointer;color:#92400E;font-size:18px;line-height:1;padding:0 0 0 8px;flex-shrink:0">✕</button>
+  </div>
   <div id="status-content"></div>
   <div style="text-align:center;padding:24px 0 8px">
     <button onclick="logout()" style="background:none;border:none;color:#8896A5;font-size:12px;font-family:inherit;cursor:pointer">Log out</button>
@@ -286,6 +290,7 @@ function render() {
     default:            el.innerHTML = viewPosted();
   }
   bindActions();
+  checkReminder();
 }
 
 function viewPosted() {
@@ -468,6 +473,31 @@ function logout() {
   window.location.href = 'login.html';
 }
 
+let reminderDismissed = false;
+let lastReminderStatus = null;
+
+function checkReminder() {
+  if (!job || user.role !== 'trader') return;
+  if (job.status !== lastReminderStatus) {
+    reminderDismissed = false;
+    lastReminderStatus = job.status;
+  }
+  const banner = document.getElementById('reminder-banner');
+  const text   = document.getElementById('reminder-text');
+  if (reminderDismissed) { banner.style.display = 'none'; return; }
+  const ageMin = (Date.now() - new Date(job.updated_at).getTime()) / 60000;
+  const message = (job.status === 'in_progress' && ageMin > 20)
+    ? 'Has your load been delivered? Tap to confirm delivery'
+    : null;
+  if (message) { text.textContent = message; banner.style.display = 'flex'; }
+  else         { banner.style.display = 'none'; }
+}
+
+function dismissReminder() {
+  reminderDismissed = true;
+  document.getElementById('reminder-banner').style.display = 'none';
+}
+
 async function init() {
   job = await findMyJob();
   if (!job) { window.location.replace('trader-home.html'); return; }
@@ -481,6 +511,7 @@ async function init() {
 
   render();
   setupRealtime();
+  setInterval(checkReminder, 60000);
 }
 
 init();
