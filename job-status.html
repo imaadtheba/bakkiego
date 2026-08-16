@@ -342,6 +342,10 @@ function viewDriverStatus(emoji, title, subtitle) {
   const driverName  = job.driver?.name  || 'Your driver';
   const driverPhone = job.driver?.phone || '';
   const waPhone     = driverPhone.startsWith('0') ? '27' + driverPhone.slice(1) : driverPhone.replace(/\D/g,'');
+  const ageMs       = Date.now() - new Date(job.updated_at).getTime();
+  const showNoShow  = user.role === 'trader'
+    && (job.status === 'accepted' || job.status === 'on_the_way')
+    && ageMs > 10 * 60 * 1000;
   return `
     <div class="view-center">
       <div class="big-emoji">${emoji}</div>
@@ -359,6 +363,9 @@ function viewDriverStatus(emoji, title, subtitle) {
       ${(user.role === 'trader' && (job.status === 'on_the_way' || job.status === 'in_progress')) ? `
       <button class="btn" style="width:100%;margin-top:16px;background:#fff;border:2px solid #FF6D00;color:#FF6D00" id="btn-mark-delivered">Mark as Delivered</button>
       <div id="delivered-confirm" style="display:none;text-align:center;color:#00C853;font-weight:700;font-size:14px;margin-top:6px">Delivery confirmed!</div>
+      ` : ''}
+      ${showNoShow ? `
+      <button class="btn" style="width:100%;margin-top:12px;background:#fff;border:2px solid #EF4444;color:#EF4444" id="btn-no-show">Driver didn't arrive</button>
       ` : ''}
     </div>`;
 }
@@ -417,6 +424,14 @@ function bindActions() {
     location.href = 'trader-home.html';
   });
 
+  const btnNoShow = document.getElementById('btn-no-show');
+  if (btnNoShow) btnNoShow.addEventListener('click', async () => {
+    if (!confirm('Cancel this job? The driver will be notified.')) return;
+    btnNoShow.disabled = true;
+    await patchJob({ status: 'cancelled' });
+    location.href = 'trader-home.html';
+  });
+
   const btnMarkDelivered = document.getElementById('btn-mark-delivered');
   if (btnMarkDelivered) btnMarkDelivered.addEventListener('click', async () => {
     if (!confirm('Confirm delivery?')) return;
@@ -458,6 +473,14 @@ function logout() {
 async function init() {
   job = await findMyJob();
   if (!job) { window.location.replace('trader-home.html'); return; }
+
+  if (['on_the_way', 'in_progress'].includes(job.status)) {
+    const ageMs = Date.now() - new Date(job.updated_at).getTime();
+    if (ageMs > 8 * 60 * 60 * 1000) {
+      await patchJob({ status: 'completed', completed_at: new Date().toISOString() });
+    }
+  }
+
   render();
   setupRealtime();
 }
