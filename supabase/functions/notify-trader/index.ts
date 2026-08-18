@@ -52,6 +52,23 @@ Deno.serve(async (req) => {
     const accessToken = await getAccessToken()
     const projectId = FIREBASE_SERVICE_ACCOUNT.project_id
 
+    // Driver cancelled by re-posting: status reverted to 'posted', driver_id cleared
+    if (record.status === 'posted' && old_record?.driver_id && !record.driver_id) {
+      const { data: trader, error } = await supabase
+        .from('users').select('fcm_token').eq('id', record.trader_id).single()
+      if (error) throw error
+      if (!trader?.fcm_token) {
+        return new Response(JSON.stringify({ message: 'Trader has no fcm_token' }), { status: 200 })
+      }
+      const result = await sendPush(
+        trader.fcm_token,
+        'Driver cancelled',
+        'Your driver cancelled — your job is live again for other drivers',
+        projectId, accessToken
+      )
+      return new Response(JSON.stringify({ sent: result }), { status: 200 })
+    }
+
     // Cancellation: determine who cancelled and notify the other party
     if (record.status === 'cancelled') {
       const driverWasAssigned = !!old_record?.driver_id
