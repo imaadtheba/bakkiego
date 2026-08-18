@@ -178,6 +178,39 @@
       margin-top: 6px;
     }
 
+    /* ── Trip history ── */
+    .trips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .trip-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E8EDF2;
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .trip-icon { font-size: 26px; flex-shrink: 0; line-height: 1; }
+
+    .trip-meta { flex: 1; min-width: 0; }
+
+    .trip-area {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .trip-date { font-size: 13px; color: #6B7280; margin-top: 3px; }
+
+    .trip-price { font-size: 15px; font-weight: 700; color: #00C853; flex-shrink: 0; }
+
     /* ── Job feed ── */
     .job-list {
       display: flex;
@@ -455,6 +488,13 @@
   <!-- Offline state -->
   <div class="offline-msg" id="offline-msg" style="display:none">
     Go online to see jobs
+  </div>
+
+  <!-- Recent trips -->
+  <div style="margin-top:28px">
+    <div class="section-header" style="margin-bottom:12px">Recent Trips</div>
+    <div class="trips-list" id="recent-trips-list"></div>
+    <a href="driver-history.html" style="display:block;text-align:center;margin-top:14px;font-size:13px;color:#6B7280;text-decoration:none">View all trips →</a>
   </div>
 
 </div>
@@ -766,11 +806,41 @@ function logout() {
   window.location.href = 'login.html';
 }
 
+async function loadRecentTrips() {
+  const listEl = document.getElementById('recent-trips-list');
+  const { data: trips } = await supabase
+    .from('jobs')
+    .select('area, offer_price, counter_price, completed_at')
+    .eq('driver_id', user.id).eq('status', 'completed')
+    .order('completed_at', { ascending: false }).limit(5);
+
+  if (!trips || trips.length === 0) {
+    listEl.innerHTML = '<div class="empty-state">No completed trips yet</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  trips.forEach(trip => {
+    const price = trip.counter_price || trip.offer_price;
+    const card = document.createElement('div');
+    card.className = 'trip-card';
+    card.innerHTML = `
+      <span class="trip-icon">📦</span>
+      <div class="trip-meta">
+        <div class="trip-area">${trip.area ?? '—'}</div>
+        <div class="trip-date">${timeAgo(trip.completed_at)}</div>
+      </div>
+      <div class="trip-price">R${price ?? '0'}</div>
+    `;
+    listEl.appendChild(card);
+  });
+}
+
 /* ── Init ── */
 document.getElementById('driver-name').textContent = user.name || user.phone || '';
 
 loadStats();
 loadActiveJob();
+loadRecentTrips();
 applyOnlineState();
 setupRealtime();
 </script>
