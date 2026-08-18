@@ -366,6 +366,7 @@
         .from('users').select('*').eq('phone', phone).maybeSingle();
 
       if (user) {
+        localStorage.setItem('lastPhone', phone);
         localStorage.setItem('user', JSON.stringify(user));
         await redirectUser(user);
       } else {
@@ -472,6 +473,9 @@
   document.getElementById('phone').addEventListener('keydown', e => {
     if (e.key === 'Enter') handleContinue();
   });
+
+  const lastPhone = localStorage.getItem('lastPhone');
+  if (lastPhone) document.getElementById('phone').value = lastPhone;
 </script>
 
 </body>

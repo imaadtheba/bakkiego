@@ -208,14 +208,19 @@
     }
 
     .driver-card-detail {
-      font-size: 14px;
-      color: #6B7280;
-      line-height: 1.6;
+      font-size: 15px;
+      font-weight: 600;
+      color: #4B5563;
+      line-height: 1.5;
+      margin-top: 4px;
     }
 
-    .driver-card-detail-label {
-      font-weight: 600;
+    .driver-card-plate {
+      font-size: 20px;
+      font-weight: 800;
       color: #1A1A2E;
+      letter-spacing: 1.5px;
+      margin-top: 6px;
     }
 
     /* ── Accepted state ── */
@@ -337,7 +342,8 @@ function driverCard() {
       </div>
       <div class="driver-card-eyebrow">Your Driver</div>
       <div class="driver-card-name">${d.name || 'Your driver'}</div>
-      ${(vehicleDesc || d.vehicle_plate) ? `<div class="driver-card-detail">${[vehicleDesc, d.vehicle_plate].filter(Boolean).join(' · ')}</div>` : ''}
+      ${vehicleDesc ? `<div class="driver-card-detail">${vehicleDesc}</div>` : ''}
+      ${d.vehicle_plate ? `<div class="driver-card-plate">${d.vehicle_plate}</div>` : ''}
     </div>`;
 }
 

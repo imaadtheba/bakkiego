@@ -434,6 +434,7 @@
         .from('jobs')
         .select('area, offer_price, counter_price, completed_at')
         .eq('trader_id', user.id).eq('status', 'completed')
+        .not('completed_at', 'is', null)
         .order('completed_at', { ascending: false }).limit(10);
 
       if (!trips || trips.length === 0) {

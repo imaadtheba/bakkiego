@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1B4332">
   <title>BakkieGo — On-demand bakkies for Tshwane Market traders</title>
   <meta name="description" content="Post a load, negotiate the price, pay cash on delivery. On-demand bakkie logistics for traders at Tshwane Fresh Produce Market.">
@@ -31,7 +31,7 @@
        SECTION 1: HERO
     ───────────────────────────────────── */
     .hero {
-      min-height: 100vh;
+      min-height: 640px;
       background: linear-gradient(160deg, #1B4332 0%, #2D6A4F 60%, #1A1A2E 100%);
       display: flex;
       flex-direction: column;
@@ -43,7 +43,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 24px;
+      padding: max(20px, env(safe-area-inset-top, 20px)) 24px 20px;
       position: absolute;
       top: 0;
       left: 0;
@@ -91,7 +91,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 60px 24px 40px;
+      padding: max(80px, calc(60px + env(safe-area-inset-top, 20px))) 24px 40px;
       max-width: 1024px;
       margin: 0 auto;
       width: 100%;
@@ -362,7 +362,7 @@
     ───────────────────────────────────── */
     .footer {
       background: #1A1A2E;
-      padding: 32px 24px;
+      padding: 32px 24px max(32px, calc(32px + env(safe-area-inset-bottom, 0px)));
       display: flex;
       justify-content: space-between;
       align-items: center;
