@@ -652,11 +652,16 @@ function startJob(id) {
   window.location.href = 'driver-job.html';
 }
 
+let feedChannel      = null;
+let activeJobChannel = null;
+
 function setupFeedRealtime() {
+  if (feedChannel) { supabase.removeChannel(feedChannel); feedChannel = null; }
   const channelName = 'driver-feed-' + user.id;
   console.log('[realtime] creating channel:', channelName);
   const channel = supabase.channel(channelName);
   console.log('[realtime] channel object created:', channel);
+  feedChannel = channel;
 
   channel
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'jobs',
@@ -686,14 +691,22 @@ function setupFeedRealtime() {
     })
     .subscribe((status, err) => {
       console.log('[realtime] feed subscribe callback - status:', status, 'error:', err || 'none');
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.log('[realtime] feed reconnecting after', status, '...');
+        supabase.removeChannel(channel);
+        feedChannel = null;
+        setTimeout(setupFeedRealtime, 3000);
+      }
     });
 }
 
 function setupActiveJobRealtime() {
+  if (activeJobChannel) { supabase.removeChannel(activeJobChannel); activeJobChannel = null; }
   const channelName = 'driver-active-' + user.id;
   console.log('[realtime] creating channel:', channelName);
   const channel = supabase.channel(channelName);
   console.log('[realtime] channel object created:', channel);
+  activeJobChannel = channel;
 
   channel
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'jobs',
@@ -705,6 +718,12 @@ function setupActiveJobRealtime() {
     })
     .subscribe((status, err) => {
       console.log('[realtime] active job subscribe callback - status:', status, 'error:', err || 'none');
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.log('[realtime] active job reconnecting after', status, '...');
+        supabase.removeChannel(channel);
+        activeJobChannel = null;
+        setTimeout(setupActiveJobRealtime, 3000);
+      }
     });
 }
 
@@ -712,6 +731,21 @@ function setupRealtime() {
   setupFeedRealtime();
   setupActiveJobRealtime();
 }
+
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  console.log('[realtime] page visible — refreshing data');
+  await loadActiveJob();
+  if (isOnline) renderJobs();
+  if (!feedChannel || feedChannel.state !== 'joined') {
+    console.log('[realtime] feed channel not subscribed — reconnecting');
+    setupFeedRealtime();
+  }
+  if (!activeJobChannel || activeJobChannel.state !== 'joined') {
+    console.log('[realtime] active job channel not subscribed — reconnecting');
+    setupActiveJobRealtime();
+  }
+});
 
 /* ── Helpers ── */
 function timeAgo(ts) {

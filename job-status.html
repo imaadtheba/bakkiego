@@ -444,11 +444,15 @@ function bindActions() {
   });
 }
 
+let realtimeChannel = null;
+
 function setupRealtime() {
+  if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
   const channelName = 'job-status-' + job.id;
   console.log('[realtime] creating channel:', channelName);
   const channel = supabase.channel(channelName);
   console.log('[realtime] channel object created:', channel);
+  realtimeChannel = channel;
 
   channel
     .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs',
@@ -464,8 +468,29 @@ function setupRealtime() {
     })
     .subscribe((status, err) => {
       console.log('[realtime] subscribe callback - status:', status, 'error:', err || 'none');
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.log('[realtime] reconnecting after', status, '...');
+        supabase.removeChannel(channel);
+        realtimeChannel = null;
+        setTimeout(setupRealtime, 3000);
+      }
     });
 }
+
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  console.log('[realtime] page visible — refreshing data');
+  if (job) {
+    const { data } = await supabase
+      .from('jobs').select('*, driver:users!driver_id(name, phone, vehicle_model, vehicle_colour, vehicle_plate)')
+      .eq('id', job.id).single();
+    if (data) { job = data; render(); }
+  }
+  if (!realtimeChannel || realtimeChannel.state !== 'joined') {
+    console.log('[realtime] channel not subscribed — reconnecting');
+    setupRealtime();
+  }
+});
 
 function logout() {
   localStorage.removeItem('user');

@@ -356,11 +356,17 @@
       return null;
     }
 
+    let realtimeChannel = null;
+    let activeJobId     = null;
+
     function setupRealtime(jobId) {
+      if (realtimeChannel) { supabase.removeChannel(realtimeChannel); realtimeChannel = null; }
+      activeJobId = jobId;
       const channelName = 'trader-home-' + jobId;
       console.log('[realtime] creating channel:', channelName);
       const channel = supabase.channel(channelName);
       console.log('[realtime] channel object created:', channel);
+      realtimeChannel = channel;
 
       channel
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs',
@@ -381,8 +387,33 @@
         })
         .subscribe((status, err) => {
           console.log('[realtime] subscribe callback - status:', status, 'error:', err || 'none');
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.log('[realtime] reconnecting after', status, '...');
+            supabase.removeChannel(channel);
+            realtimeChannel = null;
+            setTimeout(() => { if (activeJobId) setupRealtime(activeJobId); }, 3000);
+          }
         });
     }
+
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState !== 'visible') return;
+      console.log('[realtime] page visible — refreshing data');
+      const { data: rawJob } = await supabase
+        .from('jobs').select('id, status, address, updated_at')
+        .eq('trader_id', user.id)
+        .not('status', 'in', '(completed,cancelled)')
+        .order('created_at', { ascending: false })
+        .limit(1).maybeSingle();
+      const activeJob = await autoCompleteIfStale(rawJob);
+      renderActiveJob(activeJob);
+      if (activeJob) {
+        if (!realtimeChannel || realtimeChannel.state !== 'joined') {
+          console.log('[realtime] channel not subscribed — reconnecting');
+          setupRealtime(activeJob.id);
+        }
+      }
+    });
 
     async function loadPage() {
       // Active job card
