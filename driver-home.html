@@ -419,6 +419,21 @@
 
     .active-job-btn:active { opacity: 0.84; }
 
+    /* ── Waiting for response ── */
+    .waiting-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E8EDF2;
+      border-left: 4px solid #8896A5;
+      border-radius: 16px;
+      padding: 16px 20px;
+    }
+
+    .waiting-card + .waiting-card { margin-top: 10px; }
+
+    .waiting-area  { font-size: 16px; font-weight: 700; color: #1A1A2E; margin-bottom: 4px; }
+    .waiting-price { font-size: 15px; font-weight: 700; color: #FF6D00; margin-bottom: 6px; }
+    .waiting-note  { font-size: 13px; color: #6B7280; }
+
     /* ── Offline message ── */
     .offline-msg {
       text-align: center;
@@ -477,6 +492,12 @@
       <div class="active-job-address" id="active-job-address"></div>
       <a id="active-job-link" href="#" class="active-job-btn">View Job →</a>
     </div>
+  </div>
+
+  <!-- Waiting for response — driver's pending counter offers -->
+  <div id="waiting-section" style="display:none;margin-bottom:24px">
+    <div class="section-header" style="margin-bottom:12px">Waiting for Response</div>
+    <div id="waiting-list"></div>
   </div>
 
   <!-- Job feed (online) -->
@@ -574,6 +595,34 @@ async function loadActiveJob() {
   document.getElementById('active-job-address').textContent = job.address || job.area || '';
   document.getElementById('active-job-link').href           = `driver-job.html?id=${job.id}`;
   localStorage.setItem('driver_active_job_id', job.id);
+  section.style.display = '';
+}
+
+/* ── Waiting for response (driver's pending counters) ── */
+async function loadWaitingJobs() {
+  const { data: jobs } = await supabase
+    .from('jobs')
+    .select('id, area, counter_price, offer_price')
+    .eq('driver_id', user.id)
+    .eq('status', 'countered')
+    .order('created_at', { ascending: false });
+
+  const section = document.getElementById('waiting-section');
+  const listEl  = document.getElementById('waiting-list');
+  if (!jobs || jobs.length === 0) { section.style.display = 'none'; listEl.innerHTML = ''; return; }
+
+  listEl.innerHTML = '';
+  jobs.forEach(job => {
+    const price = job.counter_price || job.offer_price;
+    const card  = document.createElement('div');
+    card.className = 'waiting-card';
+    card.innerHTML = `
+      <div class="waiting-area">${job.area ?? '—'}</div>
+      <div class="waiting-price">Your counter: R${price ?? '0'}</div>
+      <div class="waiting-note">The trader is reviewing your offer…</div>
+    `;
+    listEl.appendChild(card);
+  });
   section.style.display = '';
 }
 
@@ -681,6 +730,7 @@ async function submitCounter(id) {
     await patchJob(id, { driver_id: user.id, counter_price: val, status: 'countered' });
     document.getElementById(`counter-form-${id}`).innerHTML =
       `<div class="counter-sent">Counter sent: R${val} — waiting for trader</div>`;
+    loadWaitingJobs();
   } catch (err) {
     console.error('submitCounter error:', err);
     alert('Failed to send counter. Please try again.');
@@ -817,6 +867,7 @@ document.addEventListener('visibilitychange', async () => {
   isRefreshing = true;
   try {
     await loadActiveJob();
+    await loadWaitingJobs();
     if (isOnline) await renderJobs();
     if (!feedChannel || feedChannel.state !== 'joined') {
       console.log('[realtime] feed channel not subscribed — reconnecting');
@@ -887,6 +938,7 @@ document.getElementById('driver-name').textContent = user.name || user.phone || 
 
 loadStats();
 loadActiveJob();
+loadWaitingJobs();
 loadRecentTrips();
 applyOnlineState();
 setupRealtime();

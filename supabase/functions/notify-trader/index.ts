@@ -52,8 +52,28 @@ Deno.serve(async (req) => {
     const accessToken = await getAccessToken()
     const projectId = FIREBASE_SERVICE_ACCOUNT.project_id
 
-    // Driver cancelled by re-posting: status reverted to 'posted', driver_id cleared
+    // Status reverted to 'posted' with driver_id cleared. This looks the same
+    // whether the trader declined a counter offer or the driver cancelled an
+    // assigned job — distinguish by the previous status.
     if (record.status === 'posted' && old_record?.driver_id && !record.driver_id) {
+      if (old_record.status === 'countered') {
+        // Trader declined the counter — notify the driver who made it
+        const { data: driver, error } = await supabase
+          .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
+        if (error) throw error
+        if (!driver?.fcm_token) {
+          return new Response(JSON.stringify({ message: 'Driver has no fcm_token' }), { status: 200 })
+        }
+        const result = await sendPush(
+          driver.fcm_token,
+          'Counter offer declined',
+          'The trader declined your counter offer',
+          projectId, accessToken
+        )
+        return new Response(JSON.stringify({ sent: result }), { status: 200 })
+      }
+
+      // Driver cancelled an assigned job — notify the trader
       const { data: trader, error } = await supabase
         .from('users').select('fcm_token').eq('id', record.trader_id).single()
       if (error) throw error

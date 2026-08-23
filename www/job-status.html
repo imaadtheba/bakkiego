@@ -427,7 +427,9 @@ function bindActions() {
 
   const btnDecline = document.getElementById('btn-decline');
   if (btnDecline) btnDecline.addEventListener('click', async () => {
-    const { error } = await supabase.from('jobs').delete().eq('id', job.id);
+    const { error } = await supabase.from('jobs')
+      .update({ status: 'posted', driver_id: null, counter_price: null })
+      .eq('id', job.id);
     if (error) { console.error('Decline error:', error); alert('Failed to decline offer.'); return; }
     location.href = 'trader-home.html';
   });
