@@ -52,15 +52,17 @@ Deno.serve(async (req) => {
     const accessToken = await getAccessToken()
     const projectId = FIREBASE_SERVICE_ACCOUNT.project_id
 
-    // Status reverted to 'posted' with driver_id cleared. This looks the same
-    // whether the trader declined a counter offer or the driver cancelled an
-    // assigned job — distinguish by the previous status.
+    // Status reverted to 'posted' with driver_id cleared. Same shape whether the
+    // trader declined a counter or marked the driver as a no-show — distinguish
+    // by old_record.status. Both cases notify the driver who was on the job
+    // (record.driver_id is null by now, so use old_record.driver_id).
     if (record.status === 'posted' && old_record?.driver_id && !record.driver_id) {
+      const { data: driver, error } = await supabase
+        .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
+      if (error) throw error
+
       if (old_record.status === 'countered') {
-        // Trader declined the counter — notify the driver who made it
-        const { data: driver, error } = await supabase
-          .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
-        if (error) throw error
+        console.log('[notify-trader] branch=posted/counter-declined → driver', old_record.driver_id, 'fcm_token=', driver?.fcm_token || 'none')
         if (!driver?.fcm_token) {
           return new Response(JSON.stringify({ message: 'Driver has no fcm_token' }), { status: 200 })
         }
@@ -73,60 +75,45 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ sent: result }), { status: 200 })
       }
 
-      // Driver cancelled an assigned job — notify the trader
-      const { data: trader, error } = await supabase
-        .from('users').select('fcm_token').eq('id', record.trader_id).single()
-      if (error) throw error
-      if (!trader?.fcm_token) {
-        return new Response(JSON.stringify({ message: 'Trader has no fcm_token' }), { status: 200 })
-      }
-      const result = await sendPush(
-        trader.fcm_token,
-        'Driver cancelled',
-        'Your driver cancelled — your job is live again for other drivers',
-        projectId, accessToken
-      )
-      return new Response(JSON.stringify({ sent: result }), { status: 200 })
-    }
-
-    // Cancellation: determine who cancelled and notify the other party
-    if (record.status === 'cancelled') {
-      const driverWasAssigned = !!old_record?.driver_id
-      const driverWasCleared  = driverWasAssigned && !record.driver_id
-
-      if (driverWasCleared) {
-        // Driver cancelled — notify trader
-        const { data: trader, error } = await supabase
-          .from('users').select('fcm_token').eq('id', record.trader_id).single()
-        if (error) throw error
-        if (!trader?.fcm_token) {
-          return new Response(JSON.stringify({ message: 'Trader has no fcm_token' }), { status: 200 })
-        }
-        const result = await sendPush(
-          trader.fcm_token,
-          'Driver cancelled',
-          'Your driver has cancelled — you can post the job again',
-          projectId, accessToken
-        )
-        return new Response(JSON.stringify({ sent: result }), { status: 200 })
-      } else if (driverWasAssigned) {
-        // Trader cancelled while driver was assigned — notify driver
-        const { data: driver, error } = await supabase
-          .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
-        if (error) throw error
+      if (['accepted', 'on_the_way', 'in_progress'].includes(old_record.status)) {
+        console.log('[notify-trader] branch=posted/no-show → driver', old_record.driver_id, 'fcm_token=', driver?.fcm_token || 'none')
         if (!driver?.fcm_token) {
           return new Response(JSON.stringify({ message: 'Driver has no fcm_token' }), { status: 200 })
         }
         const result = await sendPush(
           driver.fcm_token,
-          'Job cancelled',
-          'The trader has cancelled this job',
+          'Marked as not arrived',
+          'The trader marked you as not arrived — the job has been offered to other drivers',
           projectId, accessToken
         )
         return new Response(JSON.stringify({ sent: result }), { status: 200 })
       }
 
-      return new Response(JSON.stringify({ message: 'Cancelled with no driver assigned — no notification needed' }), { status: 200 })
+      console.log('[notify-trader] branch=posted/other old_status=' + old_record.status + ' — no notification')
+      return new Response(JSON.stringify({ message: 'Re-posted from ' + old_record.status + ' — no notification' }), { status: 200 })
+    }
+
+    // Job cancelled (soft): notify the assigned driver. driver_id is kept on cancel.
+    if (record.status === 'cancelled') {
+      const driverId = record.driver_id || old_record?.driver_id
+      if (!driverId) {
+        console.log('[notify-trader] branch=cancelled — no driver assigned, nothing to notify')
+        return new Response(JSON.stringify({ message: 'Cancelled with no driver assigned' }), { status: 200 })
+      }
+      const { data: driver, error } = await supabase
+        .from('users').select('fcm_token').eq('id', driverId).single()
+      if (error) throw error
+      console.log('[notify-trader] branch=cancelled → driver', driverId, 'fcm_token=', driver?.fcm_token || 'none')
+      if (!driver?.fcm_token) {
+        return new Response(JSON.stringify({ message: 'Driver has no fcm_token' }), { status: 200 })
+      }
+      const result = await sendPush(
+        driver.fcm_token,
+        'Job cancelled',
+        'The trader has cancelled this job',
+        projectId, accessToken
+      )
+      return new Response(JSON.stringify({ sent: result }), { status: 200 })
     }
 
     // All other statuses — notify trader
@@ -139,6 +126,7 @@ Deno.serve(async (req) => {
       .from('users').select('fcm_token').eq('id', record.trader_id).single()
 
     if (error) throw error
+    console.log('[notify-trader] branch=status/' + record.status + ' → trader', record.trader_id, 'fcm_token=', trader?.fcm_token || 'none')
     if (!trader?.fcm_token) {
       return new Response(JSON.stringify({ message: 'Trader has no fcm_token' }), { status: 200 })
     }

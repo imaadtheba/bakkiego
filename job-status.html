@@ -400,16 +400,14 @@ function bindActions() {
   const btnCancel = document.getElementById('btn-cancel');
   if (btnCancel) btnCancel.addEventListener('click', async () => {
     if (!confirm('Cancel this job?')) return;
-    const { data, error } = await supabase
-      .from('jobs').delete().eq('id', job.id).select();
+    // Soft-cancel: keep driver_id so the assigned driver can still be notified
+    const { error } = await supabase
+      .from('jobs')
+      .update({ status: 'cancelled', completed_at: new Date().toISOString() })
+      .eq('id', job.id);
     if (error) {
       console.error('Cancel error:', error);
       alert('Failed to cancel: ' + error.message);
-      return;
-    }
-    if (!data || data.length === 0) {
-      console.warn('Delete returned no rows — check Supabase RLS policies on jobs table');
-      alert('Could not cancel job. Check Supabase RLS policies.');
       return;
     }
     location.href = 'trader-home.html';
@@ -436,9 +434,10 @@ function bindActions() {
 
   const btnNoShow = document.getElementById('btn-no-show');
   if (btnNoShow) btnNoShow.addEventListener('click', async () => {
-    if (!confirm('Cancel this job? The driver will be notified.')) return;
+    if (!confirm("Driver didn't arrive? The job will be offered to other drivers again.")) return;
     btnNoShow.disabled = true;
-    await patchJob({ status: 'cancelled' });
+    // Re-post to the open feed; keep nothing of the old assignment
+    await patchJob({ status: 'posted', driver_id: null, counter_price: null });
     location.href = 'trader-home.html';
   });
 
