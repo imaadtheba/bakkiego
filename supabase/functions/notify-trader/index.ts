@@ -53,15 +53,15 @@ Deno.serve(async (req) => {
     const projectId = FIREBASE_SERVICE_ACCOUNT.project_id
 
     // Status reverted to 'posted' with driver_id cleared. Same shape whether the
-    // trader declined a counter or marked the driver as a no-show — distinguish
-    // by old_record.status. Both cases notify the driver who was on the job
-    // (record.driver_id is null by now, so use old_record.driver_id).
+    // trader declined a counter, the trader marked the driver as a no-show, or
+    // the driver cancelled their own job — distinguish by old_record.status
+    // (countered takes priority) and record.cancelled_by.
     if (record.status === 'posted' && old_record?.driver_id && !record.driver_id) {
-      const { data: driver, error } = await supabase
-        .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
-      if (error) throw error
-
+      // A declined counter is a different case and takes priority.
       if (old_record.status === 'countered') {
+        const { data: driver, error } = await supabase
+          .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
+        if (error) throw error
         console.log('[notify-trader] branch=posted/counter-declined → driver', old_record.driver_id, 'fcm_token=', driver?.fcm_token || 'none')
         if (!driver?.fcm_token) {
           return new Response(JSON.stringify({ message: 'Driver has no fcm_token' }), { status: 200 })
@@ -75,7 +75,29 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ sent: result }), { status: 200 })
       }
 
-      if (['accepted', 'on_the_way', 'in_progress'].includes(old_record.status)) {
+      if (record.cancelled_by === 'driver') {
+        // The driver cancelled their own job — notify the trader, not the driver.
+        const { data: trader, error } = await supabase
+          .from('users').select('fcm_token').eq('id', record.trader_id).single()
+        if (error) throw error
+        console.log('[notify-trader] branch=posted/driver-cancelled → trader', record.trader_id, 'fcm_token=', trader?.fcm_token || 'none')
+        if (!trader?.fcm_token) {
+          return new Response(JSON.stringify({ message: 'Trader has no fcm_token' }), { status: 200 })
+        }
+        const result = await sendPush(
+          trader.fcm_token,
+          'Driver cancelled',
+          'Your driver cancelled — your job is live again for other drivers',
+          projectId, accessToken
+        )
+        return new Response(JSON.stringify({ sent: result }), { status: 200 })
+      }
+
+      if (record.cancelled_by === 'trader') {
+        // The trader marked the driver as a no-show — notify the driver.
+        const { data: driver, error } = await supabase
+          .from('users').select('fcm_token').eq('id', old_record.driver_id).single()
+        if (error) throw error
         console.log('[notify-trader] branch=posted/no-show → driver', old_record.driver_id, 'fcm_token=', driver?.fcm_token || 'none')
         if (!driver?.fcm_token) {
           return new Response(JSON.stringify({ message: 'Driver has no fcm_token' }), { status: 200 })
@@ -89,7 +111,7 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ sent: result }), { status: 200 })
       }
 
-      console.log('[notify-trader] branch=posted/other old_status=' + old_record.status + ' — no notification')
+      console.log('[notify-trader] branch=posted/other old_status=' + old_record.status + ' cancelled_by=' + record.cancelled_by + ' — no notification')
       return new Response(JSON.stringify({ message: 'Re-posted from ' + old_record.status + ' — no notification' }), { status: 200 })
     }
 
