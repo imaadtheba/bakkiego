@@ -426,7 +426,7 @@ function bindActions() {
   const btnDecline = document.getElementById('btn-decline');
   if (btnDecline) btnDecline.addEventListener('click', async () => {
     const { error } = await supabase.from('jobs')
-      .update({ status: 'posted', driver_id: null, counter_price: null })
+      .update({ status: 'posted', driver_id: null, counter_price: null, cancelled_by: null })
       .eq('id', job.id);
     if (error) { console.error('Decline error:', error); alert('Failed to decline offer.'); return; }
     location.href = 'trader-home.html';
@@ -437,7 +437,7 @@ function bindActions() {
     if (!confirm("Driver didn't arrive? The job will be offered to other drivers again.")) return;
     btnNoShow.disabled = true;
     // Re-post to the open feed; keep nothing of the old assignment
-    await patchJob({ status: 'posted', driver_id: null, counter_price: null });
+    await patchJob({ status: 'posted', driver_id: null, counter_price: null, cancelled_by: 'trader' });
     location.href = 'trader-home.html';
   });
 

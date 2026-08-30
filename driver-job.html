@@ -264,7 +264,7 @@ async function pickup() {
 async function cancelJob() {
   if (!confirm('Cancel this job? It will be offered to other drivers again.')) return;
   const { error } = await supabase.from('jobs')
-    .update({ status: 'posted', driver_id: null, counter_price: null })
+    .update({ status: 'posted', driver_id: null, counter_price: null, cancelled_by: 'driver' })
     .eq('id', job.id);
   if (error) { alert('Failed to cancel job.'); return; }
   localStorage.removeItem('driver_active_job_id');
