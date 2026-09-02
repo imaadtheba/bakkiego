@@ -52,6 +52,23 @@ Deno.serve(async (req) => {
     const accessToken = await getAccessToken()
     const projectId = FIREBASE_SERVICE_ACCOUNT.project_id
 
+    // Trader accepted the driver's counter offer: notify the driver too. Don't
+    // return — fall through so the trader still gets the 'accepted' push below.
+    if (record.status === 'accepted' && old_record?.status === 'countered' && record.driver_id) {
+      const { data: driver, error } = await supabase
+        .from('users').select('fcm_token').eq('id', record.driver_id).single()
+      if (error) throw error
+      console.log('[notify-trader] branch=counter-accepted → driver', record.driver_id, 'fcm_token=', driver?.fcm_token || 'none')
+      if (driver?.fcm_token) {
+        await sendPush(
+          driver.fcm_token,
+          'Counter offer accepted',
+          'The trader accepted your price — head to the pickup',
+          projectId, accessToken
+        )
+      }
+    }
+
     // Status reverted to 'posted' with driver_id cleared. Same shape whether the
     // trader declined a counter, the trader marked the driver as a no-show, or
     // the driver cancelled their own job — distinguish by old_record.status

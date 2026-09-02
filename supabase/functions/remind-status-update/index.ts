@@ -63,6 +63,18 @@ Deno.serve(async () => {
     if (expireError) console.error('[remind-status-update] auto-expire error:', expireError)
     else console.log('[remind-status-update] auto-expire ran OK')
 
+    // Auto-cancel jobs stuck at posted/accepted for more than 24 hours (from
+    // creation). These can no longer be acted on but still show as active to
+    // the trader, so cancel them rather than leave them lingering.
+    const staleCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { error: cancelError } = await supabase
+      .from('jobs')
+      .update({ status: 'cancelled' })
+      .in('status', ['posted', 'accepted'])
+      .lt('created_at', staleCutoff)
+    if (cancelError) console.error('[remind-status-update] auto-cancel error:', cancelError)
+    else console.log('[remind-status-update] auto-cancel ran OK')
+
     // Fetch all active jobs older than the minimum threshold (5 min)
     const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     const { data: jobs, error } = await supabase

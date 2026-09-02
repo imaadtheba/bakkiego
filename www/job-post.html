@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#F5F0E8">
+  <title>BakkieGo — Post a Job</title>
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #F5F0E8;
+      color: #1A1A2E;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      padding: 20px;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-bottom: 32px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #6B7280;
+      font-size: 15px;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .back-btn:active { opacity: 0.6; }
+
+    .page-title {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+
+    /* ── Field labels ── */
+    .field-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      margin-top: 20px;
+    }
+
+    /* ── Route card ── */
+    .route-card {
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .route-card:has(.address-input.error) { border-color: #FF6D00; }
+
+    .route-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 16px 20px;
+    }
+
+    .route-row + .route-row { border-top: 1px solid #F0F4F8; }
+
+    .route-dot-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 16px;
+      margin-right: 14px;
+      flex-shrink: 0;
+      padding-top: 3px;
+    }
+
+    .route-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .route-dot--pickup  { background: #1B4332; }
+    .route-dot--dropoff { background: #FF6D00; }
+
+    .route-connector-line {
+      flex: 1;
+      width: 2px;
+      min-height: 28px;
+      background: #D1D9E0;
+      margin-top: 5px;
+    }
+
+    .route-row-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .route-row-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8896A5;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .route-row-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1A1A2E;
+    }
+
+    .route-hint {
+      font-size: 12px;
+      color: #8896A5;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* ── Address input ── */
+    .address-input {
+      width: 100%;
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      padding: 18px 20px;
+      color: #1A1A2E;
+      font-size: 17px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .address-input::placeholder { color: #8896A5; }
+    .address-input:focus         { border-color: #FF6D00; }
+    .address-input.error         { border-color: #FF6D00; }
+
+    /* inside route card the input is borderless — card provides the container */
+    .route-card .address-input {
+      border: none;
+      border-radius: 0;
+      padding: 2px 0 0;
+      background: transparent;
+      font-size: 16px;
+    }
+
+    .route-card .address-input:focus { border-color: transparent; }
+    .route-card .address-input.error { border-color: transparent; }
+
+    /* ── Price suggestion banner ── */
+    .price-suggestion-banner {
+      background: #F0FFF4;
+      border: 1px solid #FF6D00;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .suggestion-label {
+      font-size: 12px;
+      color: #6B7280;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .suggestion-price {
+      font-size: 28px;
+      font-weight: 700;
+      color: #00C853;
+      margin-bottom: 2px;
+    }
+
+    .suggestion-note {
+      font-size: 11px;
+      color: #8896A5;
+    }
+
+    /* ── Load size ── */
+    .load-size-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .load-option {
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      padding: 14px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: border-color 0.2s, background 0.2s;
+      font-family: inherit;
+    }
+
+    .load-option:active { opacity: 0.7; }
+
+    .load-option.selected {
+      border-color: #FF6D00;
+      background: rgba(255, 109, 0, 0.08);
+    }
+
+    .load-icon  { font-size: 26px; line-height: 1; }
+    .load-label { color: #1A1A2E; font-weight: 700; font-size: 14px; }
+    .load-desc  { color: #6B7280; font-size: 11px; }
+
+    /* ── Price input ── */
+    .price-wrapper {
+      display: flex;
+      align-items: center;
+      background: #FFFFFF;
+      border: 2px solid #E8EDF2;
+      border-radius: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .price-wrapper:focus-within { border-color: #FF6D00; }
+    .price-wrapper.error         { border-color: #FF6D00; }
+
+    .price-prefix {
+      padding: 18px 4px 18px 18px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #8896A5;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .price-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 18px 18px 18px 6px;
+      color: #1A1A2E;
+      font-size: 28px;
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+      min-width: 0;
+    }
+
+    .price-input::placeholder {
+      color: #E8EDF2;
+      font-weight: 400;
+      font-size: 18px;
+    }
+
+    .price-input::-webkit-inner-spin-button,
+    .price-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .price-input { -moz-appearance: textfield; }
+
+    .price-note {
+      font-size: 13px;
+      color: #6B7280;
+      margin-top: 8px;
+    }
+
+    .price-error {
+      font-size: 13px;
+      color: #D32F2F;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* ── Post button ── */
+    .btn-post {
+      display: block;
+      width: 100%;
+      background: #FF6D00;
+      color: #1A1A2E;
+      border: none;
+      border-radius: 18px;
+      padding: 22px;
+      font-size: 18px;
+      font-weight: 800;
+      font-family: inherit;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      margin-top: 28px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-post:active { opacity: 0.84; transform: scale(0.98); }
+
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = window.supabase.createClient(
+      'https://jtemxqxzgdboxknpfesb.supabase.co',
+      'sb_publishable_Da9LJuPKvJoqv_yojX5OSA_oQie51hs'
+    );
+  </script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBpqNNt-ILFT4vGfTNsBGbe9solN5a1Kkk&libraries=places&callback=initAutocomplete"></script>
+</head>
+<body>
+<div class="page">
+
+  <button class="back-btn" onclick="history.back()">← Back</button>
+  <div class="page-title">Post a job</div>
+
+  <!-- Route card -->
+  <div class="route-card" style="margin-top:0">
+    <!-- Pickup row — display-only, not submitted -->
+    <div class="route-row">
+      <div class="route-dot-col">
+        <div class="route-dot route-dot--pickup"></div>
+        <div class="route-connector-line"></div>
+      </div>
+      <div class="route-row-body">
+        <span class="route-row-label">Pickup</span>
+        <span class="route-row-value">Tshwane Fresh Produce Market</span>
+      </div>
+    </div>
+    <!-- Drop-off row — Places-bound input -->
+    <div class="route-row">
+      <div class="route-dot-col">
+        <div class="route-dot route-dot--dropoff"></div>
+      </div>
+      <div class="route-row-body">
+        <span class="route-row-label">Drop-off</span>
+        <input
+          type="text"
+          id="address-input"
+          class="address-input"
+          placeholder="Start typing your delivery address…"
+          autocomplete="off"
+        >
+      </div>
+    </div>
+  </div>
+  <p class="route-hint">More pickup areas coming soon</p>
+  <input type="hidden" id="area-input">
+  <input type="hidden" id="lat-input">
+  <input type="hidden" id="lng-input">
+
+  <!-- Price suggestion (shown after address selected) -->
+  <div id="price-suggestion" style="display:none" class="price-suggestion-banner">
+    <p class="suggestion-label">Suggested price for this area</p>
+    <p class="suggestion-price" id="suggestion-amount">R0</p>
+    <p class="suggestion-note">You can edit this below</p>
+  </div>
+
+  <!-- Load size -->
+  <label class="field-label">Load Size</label>
+  <div class="load-size-options">
+    <button type="button" class="load-option" data-size="small" onclick="selectLoadSize('small')">
+      <span class="load-icon">📦</span>
+      <span class="load-label">Small</span>
+      <span class="load-desc">Bags & boxes</span>
+    </button>
+    <button type="button" class="load-option" data-size="medium" onclick="selectLoadSize('medium')">
+      <span class="load-icon">🛒</span>
+      <span class="load-label">Medium</span>
+      <span class="load-desc">Half bakkie</span>
+    </button>
+    <button type="button" class="load-option" data-size="large" onclick="selectLoadSize('large')">
+      <span class="load-icon">🚛</span>
+      <span class="load-label">Large</span>
+      <span class="load-desc">Full bakkie</span>
+    </button>
+  </div>
+
+  <!-- Price -->
+  <label class="field-label">Your Offer</label>
+  <div class="price-wrapper" id="price-wrapper">
+    <span class="price-prefix">R</span>
+    <input
+      type="number"
+      class="price-input"
+      id="price-input"
+      inputmode="numeric"
+      min="1"
+      placeholder="0"
+    >
+  </div>
+  <p class="price-note">Drivers can accept or counter your offer</p>
+  <p class="price-error" id="price-error" style="display:none"></p>
+
+  <button class="btn-post" id="btn-post" onclick="postJob()">POST MY JOB</button>
+
+</div>
+<script>
+// Auth guard
+const _u = JSON.parse(localStorage.getItem('user') || 'null');
+if (!_u) { window.location.replace('login.html'); }
+
+/* ── Area price lookup ── */
+const AREA_PRICES = [
+  { keywords: ['marabastad', 'belle ombre'],                              area: 'Marabastad / Belle Ombre',        price: 150  },
+  { keywords: ['bloed', 'pretoria bloed'],                                area: 'Pretoria Bloed',                  price: 150  },
+  { keywords: ['arcadia', 'sunnyside'],                                   area: 'Arcadia / Sunnyside',             price: 200  },
+  { keywords: ['bosman'],                                                  area: 'Bosman',                          price: 150  },
+  { keywords: ['pretoria west'],                                           area: 'Pretoria West',                   price: 100  },
+  { keywords: ['centurion', 'lyttelton', 'irene', 'hennopspark'],         area: 'Centurion',                       price: 500  },
+  { keywords: ['sangiro'],                                                 area: 'Sangiro',                         price: 700  },
+  { keywords: ['gomora', 'hercules', 'danville'],                         area: 'Gomora / Hercules / Danville',    price: 300  },
+  { keywords: ['atteridgeville', 'mshongoville', 'laudium', 'sutherland'],area: 'Atteridgeville / Laudium',        price: 400  },
+  { keywords: ['mamelodi', 'nellmapius', 'pretoria east', 'silverton'],   area: 'Mamelodi / Pretoria East',        price: 600  },
+  { keywords: ['garankuwa', 'ga-rankuwa', 'kgabalatsane', 'hebron', 'erasmus'], area: 'Garankuwa / Kgabalatsane', price: 600  },
+  { keywords: ['winterveld', 'mabopane'],                                 area: 'Winterveld / Mabopane',           price: 650  },
+  { keywords: ['soshanguve'],                                              area: 'Soshanguve',                      price: 600  },
+  { keywords: ['pretoria north', 'roslyn', 'wonderpark'],                 area: 'Pretoria North / Roslyn',         price: 400  },
+  { keywords: ['olievenhoutbosch'],                                        area: 'Olievenhoutbosch',                price: 600  },
+  { keywords: ['moatla'],                                                  area: 'Moatla',                          price: 800  },
+  { keywords: ['mogogela', 'stink water', 'stinkwater'],                  area: 'Mogogela / Stinkwater',           price: 700  },
+  { keywords: ['cullinan'],                                                area: 'Cullinan',                        price: 750  },
+  { keywords: ['rosslyn'],                                                 area: 'Rosslyn',                         price: 400  },
+  { keywords: ['thembisa', 'swazini', 'kaalfontein'],                     area: 'Thembisa / Kaalfontein',          price: 700  },
+  { keywords: ['diepsloot'],                                               area: 'Diepsloot',                       price: 700  },
+  { keywords: ['hammanskraal'],                                            area: 'Hammanskraal',                    price: 650  },
+  { keywords: ['dan house'],                                               area: 'Dan House',                       price: 700  },
+  { keywords: ['letlhabile'],                                              area: 'Letlhabile',                      price: 800  },
+  { keywords: ['brits'],                                                   area: 'Brits',                           price: 700  },
+  { keywords: ['maboloka'],                                                area: 'Maboloka',                        price: 900  },
+  { keywords: ['klipgat'],                                                 area: 'Klipgat',                         price: 700  },
+  { keywords: ['cosmo city', 'cosmo'],                                     area: 'Cosmo City',                      price: 800  },
+  { keywords: ['rustenburg', 'marikana', 'mogaswe', 'thabane'],           area: 'Rustenburg',                      price: 1650 },
+  { keywords: ['bronkhorstspruit'],                                        area: 'Bronkhorstspruit',                price: 1000 },
+  { keywords: ['moloto'],                                                  area: 'Moloto',                          price: 1000 },
+  { keywords: ['mmakaunyane'],                                             area: 'Mmakaunyane',                     price: 700  },
+  { keywords: ['krugersdorp'],                                             area: 'Krugersdorp',                     price: 1000 },
+  { keywords: ['nkangala'],                                                area: 'Nkangala',                        price: 1100 },
+  { keywords: ['kwa mhlanga', 'kwamhlanga'],                               area: 'Kwa Mhlanga',                     price: 1200 },
+  { keywords: ['marble hall'],                                             area: 'Marble Hall',                     price: 1500 },
+  { keywords: ['phake', 'pankop'],                                         area: 'Phake / Pankop',                  price: 1200 },
+  { keywords: ['kwaggafontein'],                                           area: 'Kwaggafontein',                   price: 1500 },
+  { keywords: ['johannesburg', 'joburg', 'jozi', 'sandton', 'randburg'],  area: 'Johannesburg',                    price: 1200 },
+  { keywords: ['midrand'],                                                  area: 'Midrand',                         price: 600  },
+  { keywords: ['benoni', 'boksburg'],                                      area: 'Benoni / Boksburg',               price: 1500 },
+  { keywords: ['springs', 'brakpan', 'nigel'],                            area: 'Springs / Brakpan / Nigel',       price: 1500 },
+  { keywords: ['honeydew'],                                                area: 'Honeydew',                        price: 850  },
+  { keywords: ['bakgati'],                                                 area: 'Bakgati',                         price: 1200 },
+  { keywords: ['sefriskal', 'bela-bela', 'bela bela', 'warmbaths'],       area: 'Bela-Bela',                       price: 1500 },
+  { keywords: ['modimolle', 'nylstroom'],                                  area: 'Modimolle',                       price: 1900 },
+  { keywords: ['polokwane', 'pietersburg'],                                area: 'Polokwane',                       price: 4000 },
+  { keywords: ['naboom', 'naboomspruit', 'mookgophong'],                  area: 'Naboomspruit',                    price: 3000 },
+  { keywords: ['maobane'],                                                  area: 'Maobane',                         price: 700  },
+];
+
+function detectAreaAndPrice(formattedAddress, components) {
+  const search = [
+    formattedAddress,
+    ...(components || []).map(c => c.long_name)
+  ].join(' ').toLowerCase();
+
+  console.log('Area search text:', search);
+  for (const entry of AREA_PRICES) {
+    for (const kw of entry.keywords) {
+      if (search.includes(kw)) {
+        console.log(`Matched "${kw}" → ${entry.area} R${entry.price}`);
+        return entry;
+      }
+    }
+  }
+  console.log('No area matched');
+  return null;
+}
+
+// When no keyword matches, pull a real town/suburb name out of the Google
+// Places address_components rather than falling back to a generic 'Other'.
+function extractPlaceName(components) {
+  const preferredTypes = ['locality', 'sublocality', 'administrative_area_level_2'];
+  for (const type of preferredTypes) {
+    const comp = (components || []).find(c => (c.types || []).includes(type));
+    if (comp) {
+      console.log(`Fallback area from ${type}: ${comp.long_name}`);
+      return comp.long_name;
+    }
+  }
+  return null;
+}
+
+/* ── Load size ── */
+let selectedLoadSize = null;
+let suggestedPrice   = null;
+
+function selectLoadSize(size) {
+  selectedLoadSize = size;
+  document.querySelectorAll('.load-option').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.load-option[data-size="${size}"]`).classList.add('selected');
+}
+
+/* ── Google Places Autocomplete (classic widget) ── */
+// Called as the Google Maps script callback once the library is ready
+function initAutocomplete() {
+  const input = document.getElementById('address-input');
+
+  const ac = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: 'za' },
+    fields: ['formatted_address', 'geometry', 'address_components']
+  });
+
+  ac.addListener('place_changed', () => {
+    const place = ac.getPlace();
+    console.log('Place selected:', place.formatted_address);
+    console.log('Address components:', place.address_components);
+
+    if (!place.formatted_address) { console.warn('No address returned'); return; }
+
+    if (place.geometry) {
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      document.getElementById('lat-input').value = lat;
+      document.getElementById('lng-input').value = lng;
+      console.log('Coords:', lat, lng);
+    }
+
+    const match = detectAreaAndPrice(place.formatted_address, place.address_components);
+    console.log('Area match:', match);
+
+    if (match) {
+      suggestedPrice = match.price;
+      document.getElementById('area-input').value               = match.area;
+      document.getElementById('suggestion-amount').textContent  = `R${match.price.toLocaleString()}`;
+      document.getElementById('price-suggestion').style.display = '';
+      document.getElementById('price-input').value              = match.price;
+    } else {
+      suggestedPrice = null;
+      const placeName = extractPlaceName(place.address_components);
+      document.getElementById('area-input').value               = placeName || 'Other';
+      document.getElementById('price-suggestion').style.display = 'none';
+      document.getElementById('price-input').value              = '';
+      document.getElementById('price-input').placeholder        = 'Enter your price';
+    }
+  });
+
+  console.log('Autocomplete ready');
+}
+
+document.getElementById('price-input').addEventListener('input', () => {
+  document.getElementById('price-error').style.display = 'none';
+  document.getElementById('price-wrapper').classList.remove('error');
+});
+
+/* ── Post job ── */
+async function postJob() {
+  const address = document.getElementById('address-input').value.trim();
+  const area    = document.getElementById('area-input').value  || 'Other';
+  const latRaw  = document.getElementById('lat-input').value;
+  const lngRaw  = document.getElementById('lng-input').value;
+
+  console.log('postJob:', { address, area, selectedLoadSize, lat: latRaw, lng: lngRaw });
+
+  if (!address) {
+    const el = document.getElementById('address-input');
+    el.classList.add('error');
+    el.focus();
+    setTimeout(() => el.classList.remove('error'), 1200);
+    return;
+  }
+
+  if (!selectedLoadSize) {
+    document.querySelector('.load-option').style.outline = '2px solid #FF6D00';
+    setTimeout(() => document.querySelector('.load-option').style.outline = '', 1200);
+    alert('Please select a load size.');
+    return;
+  }
+
+  const val      = parseInt(document.getElementById('price-input').value, 10);
+  const wrapper  = document.getElementById('price-wrapper');
+  const priceErr = document.getElementById('price-error');
+  const minPrice = suggestedPrice ? Math.round(suggestedPrice * 0.3) : null;
+  if (!val) {
+    wrapper.classList.add('error');
+    document.getElementById('price-input').focus();
+    setTimeout(() => wrapper.classList.remove('error'), 1200);
+    return;
+  }
+  if (minPrice !== null && val < minPrice) {
+    wrapper.classList.add('error');
+    document.getElementById('price-input').focus();
+    priceErr.textContent = `Offer too low — minimum offer for this area is R${minPrice.toLocaleString()}`;
+    priceErr.style.display = '';
+    return;
+  }
+
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user?.id) { alert('Please log in again.'); window.location.href = 'login.html'; return; }
+
+  const btn = document.getElementById('btn-post');
+  btn.disabled = true; btn.textContent = 'Posting…';
+
+  try {
+    const jobRow = {
+      trader_id:   user.id,
+      area,
+      address,
+      load_size:   selectedLoadSize,
+      offer_price: val,
+      status:      'posted',
+      lat:         latRaw  ? parseFloat(latRaw)  : null,
+      lng:         lngRaw  ? parseFloat(lngRaw)  : null
+    };
+
+    console.log('Posting job:', JSON.stringify(jobRow));
+    const { data, error } = await supabase.from('jobs').insert(jobRow).select().single();
+
+    if (error) {
+      console.error('Post job error:', JSON.stringify(error));
+      btn.disabled = false; btn.textContent = 'POST MY JOB';
+      alert('Failed to post job: ' + error.message + (error.details ? ' | ' + error.details : ''));
+      return;
+    }
+
+    console.log('Job posted:', data);
+    window.location.href = 'trader-home.html';
+  } catch (err) {
+    console.error('Post job error:', err);
+    btn.disabled = false; btn.textContent = 'POST MY JOB';
+    alert('Failed to post job. Please try again.');
+  }
+}
+</script>
+</body>
+</html>
