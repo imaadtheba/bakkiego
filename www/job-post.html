@@ -483,7 +483,7 @@ function detectAreaAndPrice(formattedAddress, components) {
 // When no keyword matches, pull a real town/suburb name out of the Google
 // Places address_components rather than falling back to a generic 'Other'.
 function extractPlaceName(components) {
-  const preferredTypes = ['locality', 'sublocality', 'administrative_area_level_2'];
+  const preferredTypes = ['locality', 'sublocality', 'sublocality_level_1', 'administrative_area_level_2'];
   for (const type of preferredTypes) {
     const comp = (components || []).find(c => (c.types || []).includes(type));
     if (comp) {

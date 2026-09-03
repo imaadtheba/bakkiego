@@ -480,6 +480,20 @@ function detectAreaAndPrice(formattedAddress, components) {
   return null;
 }
 
+// When no keyword matches, pull a real town/suburb name out of the Google
+// Places address_components rather than falling back to a generic 'Other'.
+function extractPlaceName(components) {
+  const preferredTypes = ['locality', 'sublocality', 'sublocality_level_1', 'administrative_area_level_2'];
+  for (const type of preferredTypes) {
+    const comp = (components || []).find(c => (c.types || []).includes(type));
+    if (comp) {
+      console.log(`Fallback area from ${type}: ${comp.long_name}`);
+      return comp.long_name;
+    }
+  }
+  return null;
+}
+
 /* ── Load size ── */
 let selectedLoadSize = null;
 let suggestedPrice   = null;
@@ -526,7 +540,8 @@ function initAutocomplete() {
       document.getElementById('price-input').value              = match.price;
     } else {
       suggestedPrice = null;
-      document.getElementById('area-input').value               = 'Other';
+      const placeName = extractPlaceName(place.address_components);
+      document.getElementById('area-input').value               = placeName || 'Other';
       document.getElementById('price-suggestion').style.display = 'none';
       document.getElementById('price-input').value              = '';
       document.getElementById('price-input').placeholder        = 'Enter your price';
